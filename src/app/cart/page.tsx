@@ -17,7 +17,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, addDoc } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { onAuthStateChanged } from 'firebase/auth';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -38,26 +37,43 @@ export default function CartPage() {
     const price = item.price * (1 - item.discount / 100);
     return sum + price * item.quantity;
   }, 0);
-
-  const placeOrder = async (userId: string) => {
-    let shippingAddress = 'Pickup';
+  
+  const validateForm = () => {
     if (deliveryMethod === 'delivery') {
         if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required buyer and address fields.' });
-            setIsSubmitting(false);
-            return;
+            return false;
         }
-        shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
     } else {
         if (!buyerName || !phoneNumber) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out the buyer name and phone number.' });
-            setIsSubmitting(false);
-            return;
+            return false;
         }
+    }
+    return true;
+  }
+
+  const handleCheckout = async () => {
+    if (!validateForm()) {
+        return;
+    }
+    
+    setIsSubmitting(true);
+    
+    if (!user) {
+        initiateAnonymousSignIn(auth);
+        toast({ title: 'Creating secure session...', description: 'Please click "Place your order" again to confirm.' });
+        setIsSubmitting(false);
+        return;
+    }
+
+    let shippingAddress = 'Pickup';
+    if (deliveryMethod === 'delivery') {
+        shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
     }
 
     const orderData = {
-        userId: userId,
+        userId: user.uid,
         orderDate: serverTimestamp(),
         totalAmount: subtotal,
         status: 'processing',
@@ -68,7 +84,7 @@ export default function CartPage() {
     };
 
     try {
-        const orderCollectionRef = collection(firestore, 'users', userId, 'orders');
+        const orderCollectionRef = collection(firestore, 'users', user.uid, 'orders');
         const newOrderRef = await addDoc(orderCollectionRef, orderData);
 
         const batch = writeBatch(firestore);
@@ -103,25 +119,6 @@ export default function CartPage() {
         toast({ variant: 'destructive', title: 'Order Failed', description: 'There was a problem placing your order. Please try again.' });
     } finally {
         setIsSubmitting(false);
-    }
-  };
-
-  const handleCheckout = async () => {
-    setIsSubmitting(true);
-
-    if (user) {
-      await placeOrder(user.uid);
-    } else {
-      const unsubscribe = onAuthStateChanged(auth, async (newUser) => {
-        unsubscribe(); // Unsubscribe to avoid multiple calls
-        if (newUser) {
-          await placeOrder(newUser.uid);
-        } else {
-          toast({ variant: 'destructive', title: 'Authentication Failed', description: 'Could not create a secure session. Please try again.' });
-          setIsSubmitting(false);
-        }
-      });
-      initiateAnonymousSignIn(auth);
     }
   };
 
@@ -280,7 +277,7 @@ export default function CartPage() {
                 )}
                 
                 <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting || isUserLoading}>
-                  {isSubmitting ? 'Placing Order...' : 'Place your order'}
+                  {isUserLoading ? 'Loading...' : user ? 'Place your order' : 'Continue as Guest'}
                 </Button>
               </CardContent>
             </Card>
