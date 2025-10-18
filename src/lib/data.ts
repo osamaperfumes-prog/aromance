@@ -81,10 +81,6 @@ export const footerLinks: FooterLink[] = [
     title: 'Customer Service',
     links: [
       { name: 'Contact Us', href: '#' },
-      { name: 'Track Order', href: '#' },
-      { name: 'Shipping Info', href: '#' },
-      { name: 'Returns', href: '#' },
-      { name: 'FAQ', href: '#' },
     ],
   },
   {
