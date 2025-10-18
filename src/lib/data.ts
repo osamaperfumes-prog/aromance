@@ -95,7 +95,6 @@ export const footerLinks: FooterLink[] = [
       { name: 'New Arrivals', href: '#' },
       { name: 'Best Sellers', href: '#' },
       { name: 'Brands', href: '#' },
-      { name: 'Deals & Coupons', href: '#' },
     ],
   },
 ];
