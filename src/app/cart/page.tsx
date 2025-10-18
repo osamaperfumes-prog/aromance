@@ -124,13 +124,15 @@ export default function CartPage() {
                 
                 <Separator />
 
-                <div className="space-y-2">
-                  <Label htmlFor="buyer-name">Buyer Name</Label>
-                  <Input id="buyer-name" placeholder="Enter your name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone-number">Phone Number</Label>
-                  <Input id="phone-number" type="tel" placeholder="Enter your phone number" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label htmlFor="buyer-name">Buyer Name</Label>
+                    <Input id="buyer-name" placeholder="Enter your name" />
+                  </div>
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label htmlFor="phone-number">Phone Number</Label>
+                    <Input id="phone-number" type="tel" placeholder="Enter your phone number" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Delivery or Pickup</Label>
@@ -149,13 +151,15 @@ export default function CartPage() {
                 {deliveryMethod === 'delivery' && (
                    <div className="space-y-4 pt-4 border-t">
                      <h3 className="font-semibold text-lg">Location</h3>
-                     <div className="space-y-2">
-                       <Label htmlFor="city">City</Label>
-                       <Input id="city" placeholder="e.g. Amman" />
-                     </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="neighborhood">Neighborhood</Label>
-                       <Input id="neighborhood" placeholder="e.g. Abdoun" />
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2 col-span-2 sm:col-span-1">
+                          <Label htmlFor="city">City</Label>
+                          <Input id="city" placeholder="e.g. Amman" />
+                        </div>
+                        <div className="space-y-2 col-span-2 sm:col-span-1">
+                          <Label htmlFor="neighborhood">Neighborhood</Label>
+                          <Input id="neighborhood" placeholder="e.g. Abdoun" />
+                        </div>
                      </div>
                      <div className="space-y-2">
                        <Label htmlFor="street">Street</Label>
