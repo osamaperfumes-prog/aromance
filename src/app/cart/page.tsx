@@ -8,9 +8,14 @@ import { Input } from '@/components/ui/input';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatPrice } from '@/lib/utils';
 import { Trash2, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const [deliveryMethod, setDeliveryMethod] = useState('delivery');
 
   const subtotal = cartItems.reduce((sum, item) => {
     const price = item.price * (1 - item.discount / 100);
@@ -94,23 +99,79 @@ export default function CartPage() {
                 <Button variant="outline" onClick={clearCart}>Clear Cart</Button>
              </div>
           </div>
-          <div className="lg:col-span-1">
-            <div className="bg-card border rounded-lg p-6 sticky top-28">
-              <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
-              <div className="flex justify-between mb-2">
-                <span>Subtotal</span>
-                <span>{formatPrice(subtotal)}</span>
-              </div>
-              <div className="flex justify-between mb-4 text-muted-foreground">
-                <span>Shipping</span>
-                <span>Calculated at next step</span>
-              </div>
-              <div className="border-t pt-4 flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span>{formatPrice(subtotal)}</span>
-              </div>
-              <Button className="w-full mt-6" size="lg">Proceed to Checkout</Button>
-            </div>
+          <div className="lg:col-span-1 space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between mb-2">
+                  <span>Subtotal</span>
+                  <span>{formatPrice(subtotal)}</span>
+                </div>
+                <div className="flex justify-between mb-4 text-muted-foreground">
+                  <span>Shipping</span>
+                  <span>Calculated at next step</span>
+                </div>
+                <div className="border-t pt-4 flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>{formatPrice(subtotal)}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Order Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="buyer-name">اسم المشتري</Label>
+                  <Input id="buyer-name" placeholder="Enter your name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone-number">رقم الهاتف</Label>
+                  <Input id="phone-number" type="tel" placeholder="Enter your phone number" />
+                </div>
+                <div className="space-y-2">
+                  <Label>توصيل او استلام</Label>
+                  <RadioGroup defaultValue="delivery" value={deliveryMethod} onValueChange={setDeliveryMethod} className="flex gap-4 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="delivery" id="delivery" />
+                      <Label htmlFor="delivery">توصيل</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="pickup" id="pickup" />
+                      <Label htmlFor="pickup">استلام</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {deliveryMethod === 'delivery' && (
+                   <div className="space-y-4 pt-4 border-t">
+                     <h3 className="font-semibold text-lg">الموقع</h3>
+                     <div className="space-y-2">
+                       <Label htmlFor="city">المدينة</Label>
+                       <Input id="city" placeholder="e.g. Amman" />
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="neighborhood">الحي</Label>
+                       <Input id="neighborhood" placeholder="e.g. Abdoun" />
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="street">الشارع</Label>
+                       <Input id="street" placeholder="e.g. 123 Main St" />
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="landmark">اقرب معلم بارز</Label>
+                       <Input id="landmark" placeholder="e.g. Near the big mosque" />
+                     </div>
+                   </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Button className="w-full" size="lg">Proceed to Checkout</Button>
           </div>
         </div>
       )}
