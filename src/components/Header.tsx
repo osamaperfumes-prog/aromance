@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { navLinks } from '@/lib/data';
-import { Search, User, Heart, ShoppingCart, Menu } from 'lucide-react';
+import { Search, Heart, ShoppingCart, Menu } from 'lucide-react';
 
 export const Header = () => {
   return (
@@ -55,9 +55,6 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" aria-label="Account">
-              <User className="h-6 w-6" />
-            </Button>
             <Button variant="ghost" size="icon" aria-label="Wishlist">
               <Heart className="h-6 w-6" />
             </Button>
