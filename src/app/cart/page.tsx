@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 
 export default function CartPage() {
@@ -105,7 +105,27 @@ export default function CartPage() {
 
     try {
       // 1. Create the Order document
-      const orderRef = await addDoc(collection(firestore, 'users', currentUserId, 'orders'), {
+      const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
+      const newOrderRef = doc(orderCollectionRef); // Create a new doc reference to get the ID
+
+      // 2. Create a batch to add all OrderItems and the Order itself
+      const batch = writeBatch(firestore);
+
+      cartItems.forEach(item => {
+        const orderItemRef = doc(collection(newOrderRef, 'orderItems')); // Doc ref inside subcollection
+        const finalPrice = item.price * (1 - item.discount / 100);
+        batch.set(orderItemRef, {
+           orderId: newOrderRef.id,
+           productId: item.id,
+           quantity: item.quantity,
+           itemPrice: finalPrice,
+           name: item.name, // Denormalize for easier display
+           brand: item.brand, // Denormalize for easier display
+        });
+      });
+      
+      // Add the order to the batch
+      batch.set(newOrderRef, {
         userId: currentUserId,
         orderDate: serverTimestamp(),
         totalAmount: subtotal,
@@ -116,27 +136,12 @@ export default function CartPage() {
         deliveryMethod: deliveryMethod,
       });
 
-      // 2. Create a batch to add all OrderItems
-      const batch = writeBatch(firestore);
-      cartItems.forEach(item => {
-        const orderItemRef = collection(firestore, 'users', currentUserId, 'orders', orderRef.id, 'orderItems');
-        const finalPrice = item.price * (1 - item.discount / 100);
-        batch.set(addDoc(orderItemRef, {}).withConverter(null), {
-           orderId: orderRef.id,
-           productId: item.id,
-           quantity: item.quantity,
-           itemPrice: finalPrice,
-           name: item.name, // Denormalize for easier display
-           brand: item.brand, // Denormalize for easier display
-        });
-      });
-      
       // 3. Commit the batch
       await batch.commit();
 
       toast({
         title: 'Order Placed!',
-        description: 'Thank you for your purchase. Your order is being processed.',
+        description: 'You will be contacted soon.',
       });
       
       clearCart();
@@ -314,13 +319,13 @@ export default function CartPage() {
                      </div>
                      <div className="space-y-2">
                        <Label htmlFor="landmark">Nearest Landmark</Label>
-                       <Input id="landmark" placeholder="e.g. Near the big mosque" value={landmark} onChange={(e) => setLandmark(e.g.target.value)} />
+                       <Input id="landmark" placeholder="e.g. Near the big mosque" value={landmark} onChange={(e) => setLandmark(e.target.value)} />
                      </div>
                    </div>
                 )}
                 
                 <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting}>
-                  {isSubmitting ? 'Placing Order...' : 'Proceed to Checkout'}
+                  {isSubmitting ? 'Placing Order...' : 'Place your order'}
                 </Button>
               </CardContent>
             </Card>
