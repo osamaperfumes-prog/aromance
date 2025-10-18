@@ -15,13 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
-  const { firestore, auth, user } = useFirebase();
+  const { firestore, auth, user, isUserLoading } = useFirebase();
   const { toast } = useToast();
 
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -41,44 +41,24 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     setIsSubmitting(true);
-    let currentUserId = user?.uid;
 
-    // If there's no user, sign in anonymously and wait for the user object to be available.
-    if (!user) {
-      try {
-        await new Promise<string>((resolve, reject) => {
-          const unsubscribe = auth.onAuthStateChanged(newUser => {
-            if (newUser) {
-              unsubscribe();
-              resolve(newUser.uid);
-            }
-          });
-          initiateAnonymousSignIn(auth); // non-blocking
-          setTimeout(() => {
-            unsubscribe();
-            reject(new Error("Anonymous sign-in timed out."));
-          }, 5000);
-        }).then(uid => {
-          currentUserId = uid;
-        });
-
-      } catch (error) {
-        console.error('Anonymous sign-in failed:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Authentication Error',
-          description: 'Could not prepare your session for checkout. Please try again.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
+    if (isUserLoading) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication in progress',
+        description: 'Please wait a moment while we verify your session.',
+      });
+      setIsSubmitting(false);
+      return;
     }
 
+    let currentUserId = user?.uid;
+
     if (!currentUserId) {
+        initiateAnonymousSignIn(auth);
         toast({
-            variant: 'destructive',
-            title: 'Not signed in',
-            description: 'You must be signed in to place an order.',
+            title: "Creating Session",
+            description: "We're preparing your secure checkout. Please click 'Place your order' again in a moment.",
         });
         setIsSubmitting(false);
         return;
@@ -111,6 +91,7 @@ export default function CartPage() {
       };
 
       const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
+      // The addDocumentNonBlocking function now returns a Promise<DocumentReference | undefined>
       const newOrderRef = await addDocumentNonBlocking(orderCollectionRef, orderData);
 
       if (!newOrderRef) {
@@ -124,6 +105,7 @@ export default function CartPage() {
         setIsSubmitting(false);
         return;
       }
+
 
       const batch = writeBatch(firestore);
       cartItems.forEach(item => {
@@ -321,7 +303,7 @@ export default function CartPage() {
                    </div>
                 )}
                 
-                <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting}>
+                <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting || isUserLoading}>
                   {isSubmitting ? 'Placing Order...' : 'Place your order'}
                 </Button>
               </CardContent>
