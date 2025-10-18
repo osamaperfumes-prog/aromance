@@ -69,7 +69,7 @@ export const Header = () => {
 
         {/* Navigation Bar - Desktop */}
         <nav className="hidden lg:flex justify-center items-center h-12 border-t">
-          <ul className="flex items-center gap-6">
+          <ul className="flex items-center gap-10">
             {navLinks.map((link) => (
               <li key={link.name}>
                 <Link
