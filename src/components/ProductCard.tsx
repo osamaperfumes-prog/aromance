@@ -1,0 +1,68 @@
+'use client';
+import Image from 'next/image';
+import Link from 'next/link';
+import type { Product } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { formatPrice } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShoppingCart } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface ProductCardProps {
+  product: Product;
+}
+
+export const ProductCard = ({ product }: ProductCardProps) => {
+  const { toast } = useToast();
+  const image = PlaceHolderImages.find(img => img.id === product.imageId);
+
+  const handleAddToCart = () => {
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
+  return (
+    <Card className="flex flex-col h-full overflow-hidden group">
+      <CardHeader className="p-0 relative">
+        <Link href={`/products/${product.id}`} className="block">
+          <div className="aspect-square relative">
+            {image && (
+              <Image
+                src={image.imageUrl}
+                alt={product.name}
+                fill
+                data-ai-hint={image.imageHint}
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            )}
+            {product.discount > 0 && (
+              <div className="absolute top-3 right-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-sm">
+                {product.discount}% OFF
+              </div>
+            )}
+          </div>
+        </Link>
+      </CardHeader>
+      <CardContent className="p-4 flex-grow">
+        <CardDescription>{product.brand}</CardDescription>
+        <CardTitle className="mt-1 text-base font-semibold leading-tight">
+          <Link href={`/products/${product.id}`}>{product.name}</Link>
+        </CardTitle>
+        <div className="mt-2 flex items-baseline gap-2">
+          <p className="text-lg font-bold text-primary">{formatPrice(product.price * (1 - product.discount / 100))}</p>
+          {product.discount > 0 && (
+            <p className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</p>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter className="p-4 pt-0">
+        <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleAddToCart}>
+          <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};

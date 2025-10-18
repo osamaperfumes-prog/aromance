@@ -1,3 +1,100 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "shop-by-type-1",
+      "description": "Category image for Testers",
+      "imageUrl": "https://images.unsplash.com/photo-1615160460366-2c9a41771b51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2MDczOTQ2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
+    },
+    {
+      "id": "shop-by-type-2",
+      "description": "Category image for Travel Size",
+      "imageUrl": "https://images.unsplash.com/photo-1622952826417-6212791163ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJmdW1lJTIwdHJhdmVsfGVufDB8fHx8MTc2MDgxODEwM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume travel"
+    },
+    {
+      "id": "shop-by-type-3",
+      "description": "Category image for Gift Sets",
+      "imageUrl": "https://images.unsplash.com/photo-1656821991606-45dc1fe308a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJmdW1lJTIwZ2lmdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume gift"
+    },
+    {
+      "id": "shop-by-type-4",
+      "description": "Category image for Samples",
+      "imageUrl": "https://images.unsplash.com/photo-1654524437870-58365dea153b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJmdW1lJTIwc2FtcGxlc3xlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume samples"
+    },
+    {
+      "id": "testimonial-1",
+      "description": "Perfume bottle for testimonial 1",
+      "imageUrl": "https://images.unsplash.com/photo-1615160460366-2c9a41771b51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2MDczOTQ2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
+    },
+    {
+      "id": "testimonial-2",
+      "description": "Perfume bottle for testimonial 2",
+      "imageUrl": "https://images.unsplash.com/photo-1585218334450-afcf929da36e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2MDczOTQ2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
+    },
+    {
+      "id": "testimonial-3",
+      "description": "Perfume bottle for testimonial 3",
+      "imageUrl": "https://images.unsplash.com/photo-1594035910387-fea47794261f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2MDczOTQ2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
+    },
+    {
+      "id": "testimonial-4",
+      "description": "Perfume bottle for testimonial 4",
+      "imageUrl": "https://images.unsplash.com/photo-1608721279136-cd41b752fa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJmdW1lJTIwYm90dGxlfGVufDB8fHx8MTc2MDczOTQ2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume bottle"
+    },
+    {
+      "id": "product-1",
+      "description": "Product image for Versace Eros",
+      "imageUrl": "https://images.unsplash.com/photo-1732870094545-f6de09bfeae9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-2",
+      "description": "Product image for Dior Sauvage",
+      "imageUrl": "https://images.unsplash.com/photo-1635796436337-50481b9fa2ad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-3",
+      "description": "Product image for Dolce & Gabbana Light Blue",
+      "imageUrl": "https://images.unsplash.com/photo-1704621355055-d70d87d47fe2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGVyZnVtZSUyMHByb2R1Y3R8ZW58MHx8fHwxNzYwODE4MTAyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-4",
+      "description": "Product image for Giorgio Armani Acqua Di Gio",
+      "imageUrl": "https://images.unsplash.com/photo-1635796496346-31c6bde431b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-5",
+      "description": "Product image for Calvin Klein CK One",
+      "imageUrl": "https://images.unsplash.com/photo-1608721279136-cd41b752fa41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-6",
+      "description": "Product image for Gucci Bloom",
+      "imageUrl": "https://images.unsplash.com/photo-1682932006997-91aa688fb5c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-7",
+      "description": "Product image for Elizabeth Arden White Tea",
+      "imageUrl": "https://images.unsplash.com/photo-1704621355029-e440f65aa09a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    },
+    {
+      "id": "product-8",
+      "description": "Product image for Carolina Herrera Good Girl",
+      "imageUrl": "https://images.unsplash.com/photo-1458538977777-0549b2370168?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJmdW1lJTIwcHJvZHVjdHxlbnwwfHx8fDE3NjA4MTgxMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "perfume product"
+    }
+  ]
 }
