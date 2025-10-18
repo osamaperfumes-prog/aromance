@@ -165,6 +165,18 @@
         "shippingAddress": {
           "type": "string",
           "description": "The address the order was shipped to."
+        },
+        "buyerName": {
+            "type": "string",
+            "description": "Name of the buyer."
+        },
+        "phoneNumber": {
+            "type": "string",
+            "description": "Phone number of the buyer."
+        },
+        "deliveryMethod": {
+            "type": "string",
+            "description": "Chosen delivery method (e.g., delivery, pickup)."
         }
       },
       "required": [
@@ -173,7 +185,10 @@
         "orderDate",
         "totalAmount",
         "status",
-        "shippingAddress"
+        "shippingAddress",
+        "buyerName",
+        "phoneNumber",
+        "deliveryMethod"
       ]
     },
     "OrderItem": {

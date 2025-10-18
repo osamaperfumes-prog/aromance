@@ -13,15 +13,158 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { firestore, auth, user } = useFirebase();
+  const { toast } = useToast();
+
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
+  const [buyerName, setBuyerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [city, setCity] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [street, setStreet] = useState('');
+  const [buildingNumber, setBuildingNumber] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const subtotal = cartItems.reduce((sum, item) => {
     const price = item.price * (1 - item.discount / 100);
     return sum + price * item.quantity;
   }, 0);
+
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+    let currentUserId = user?.uid;
+
+    if (!user) {
+      try {
+        initiateAnonymousSignIn(auth);
+        toast({
+          title: 'Signing in...',
+          description: 'Please wait while we prepare your checkout.',
+        });
+        // This is not ideal, but we need to wait for the auth state to change.
+        // A better solution would involve waiting for the user object to be available.
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // After waiting, check auth.currentUser directly.
+        currentUserId = auth.currentUser?.uid;
+
+        if (!currentUserId) {
+          toast({
+            variant: 'destructive',
+            title: 'Authentication Failed',
+            description: 'Could not sign you in to complete the purchase. Please try again.',
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+      } catch (error) {
+        console.error('Anonymous sign-in failed:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'An error occurred during sign-in. Please try again.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+
+    if (!currentUserId) {
+        toast({
+            variant: 'destructive',
+            title: 'Not signed in',
+            description: 'You must be signed in to place an order.',
+        });
+        setIsSubmitting(false);
+        return;
+    }
+
+    let shippingAddress = 'Pickup';
+    if (deliveryMethod === 'delivery') {
+      if (!city || !neighborhood || !street || !buildingNumber) {
+        toast({
+          variant: 'destructive',
+          title: 'Missing Address',
+          description: 'Please fill out all required delivery address fields.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark}`;
+    }
+
+    try {
+      // 1. Create the Order document
+      const orderRef = await addDoc(collection(firestore, 'users', currentUserId, 'orders'), {
+        userId: currentUserId,
+        orderDate: serverTimestamp(),
+        totalAmount: subtotal,
+        status: 'processing',
+        shippingAddress: shippingAddress,
+        buyerName: buyerName,
+        phoneNumber: phoneNumber,
+        deliveryMethod: deliveryMethod,
+      });
+
+      // 2. Create a batch to add all OrderItems
+      const batch = writeBatch(firestore);
+      cartItems.forEach(item => {
+        const orderItemRef = collection(firestore, 'users', currentUserId, 'orders', orderRef.id, 'orderItems');
+        const finalPrice = item.price * (1 - item.discount / 100);
+        batch.set(addDoc(orderItemRef, {}).withConverter(null), {
+           orderId: orderRef.id,
+           productId: item.id,
+           quantity: item.quantity,
+           itemPrice: finalPrice,
+           name: item.name, // Denormalize for easier display
+           brand: item.brand, // Denormalize for easier display
+        });
+      });
+      
+      // 3. Commit the batch
+      await batch.commit();
+
+      toast({
+        title: 'Order Placed!',
+        description: 'Thank you for your purchase. Your order is being processed.',
+      });
+      
+      clearCart();
+      // Reset form fields
+      setBuyerName('');
+      setPhoneNumber('');
+      setCity('');
+      setNeighborhood('');
+      setStreet('');
+      setBuildingNumber('');
+      setLandmark('');
+
+    } catch (error: any) {
+        console.error("Error placing order:", error);
+        if (error.request) {
+            // This is a FirestorePermissionError
+            throw error;
+        }
+        toast({
+            variant: 'destructive',
+            title: 'Order Failed',
+            description: 'There was a problem placing your order. Please try again.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   return (
     <div className="container mx-auto py-8 md:py-12">
@@ -113,7 +256,7 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Shipping</span>
-                      <span>Calculated at next step</span>
+                      <span>{deliveryMethod === 'delivery' ? 'Calculated at next step' : 'Pickup'}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
@@ -127,11 +270,11 @@ export default function CartPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 col-span-2 sm:col-span-1">
                     <Label htmlFor="buyer-name">Buyer Name</Label>
-                    <Input id="buyer-name" placeholder="Enter your name" />
+                    <Input id="buyer-name" placeholder="Enter your name" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} required />
                   </div>
                   <div className="space-y-2 col-span-2 sm:col-span-1">
                     <Label htmlFor="phone-number">Phone Number</Label>
-                    <Input id="phone-number" type="tel" placeholder="Enter your phone number" />
+                    <Input id="phone-number" type="tel" placeholder="Enter your phone number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -154,29 +297,31 @@ export default function CartPage() {
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2 col-span-2 sm:col-span-1">
                           <Label htmlFor="city">City</Label>
-                          <Input id="city" placeholder="e.g. Amman" />
+                          <Input id="city" placeholder="e.g. Amman" value={city} onChange={(e) => setCity(e.target.value)} required />
                         </div>
                         <div className="space-y-2 col-span-2 sm:col-span-1">
                           <Label htmlFor="neighborhood">Neighborhood</Label>
-                          <Input id="neighborhood" placeholder="e.g. Abdoun" />
+                          <Input id="neighborhood" placeholder="e.g. Abdoun" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} required />
                         </div>
                      </div>
                      <div className="space-y-2">
                        <Label htmlFor="street">Street</Label>
-                       <Input id="street" placeholder="e.g. 123 Main St" />
+                       <Input id="street" placeholder="e.g. 123 Main St" value={street} onChange={(e) => setStreet(e.target.value)} required />
                      </div>
                       <div className="space-y-2">
                        <Label htmlFor="building-number">Building Number</Label>
-                       <Input id="building-number" placeholder="e.g. Building 1, Floor 2" />
+                       <Input id="building-number" placeholder="e.g. Building 1, Floor 2" value={buildingNumber} onChange={(e) => setBuildingNumber(e.target.value)} required />
                      </div>
                      <div className="space-y-2">
                        <Label htmlFor="landmark">Nearest Landmark</Label>
-                       <Input id="landmark" placeholder="e.g. Near the big mosque" />
+                       <Input id="landmark" placeholder="e.g. Near the big mosque" value={landmark} onChange={(e) => setLandmark(e.g.target.value)} />
                      </div>
                    </div>
                 )}
                 
-                <Button className="w-full" size="lg">Proceed to Checkout</Button>
+                <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting}>
+                  {isSubmitting ? 'Placing Order...' : 'Proceed to Checkout'}
+                </Button>
               </CardContent>
             </Card>
           </div>
