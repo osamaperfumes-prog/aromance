@@ -8,10 +8,6 @@ export const navLinks: NavLink[] = [
   { name: 'Gift Sets', href: '/products' },
   { name: 'Samples', href: '/products' },
   { name: 'Perfume', href: '/products' },
-  { name: 'Cologne', href: '/products' },
-  { name: 'Body Lotion', href: '/products' },
-  { name: 'Aftershave', href: '/products' },
-  { name: 'Discontinued', href: '/products' },
 ];
 
 export const trustBadges: TrustBadge[] = [
