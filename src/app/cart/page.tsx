@@ -10,13 +10,14 @@ import { formatPrice } from '@/lib/utils';
 import { Trash2, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, addDoc } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -38,108 +39,89 @@ export default function CartPage() {
     return sum + price * item.quantity;
   }, 0);
 
-  const handleCheckout = async () => {
-    setIsSubmitting(true);
-
-    if (isUserLoading) {
-      toast({
-        title: 'Verifying session...',
-        description: 'Please wait a moment.',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    let currentUserId = user?.uid;
-
-    if (!currentUserId) {
-      initiateAnonymousSignIn(auth);
-      toast({
-        title: 'Creating Secure Session',
-        description: "We're preparing your checkout. Please click 'Place your order' again in a moment.",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
+  const placeOrder = async (userId: string) => {
     let shippingAddress = 'Pickup';
     if (deliveryMethod === 'delivery') {
-      if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
-        toast({
-          variant: 'destructive',
-          title: 'Missing Information',
-          description: 'Please fill out all required buyer and address fields.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
+        if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required buyer and address fields.' });
+            setIsSubmitting(false);
+            return;
+        }
+        shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
     } else {
-       if (!buyerName || !phoneNumber) {
-        toast({
-          variant: 'destructive',
-          title: 'Missing Information',
-          description: 'Please fill out the buyer name and phone number.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
+        if (!buyerName || !phoneNumber) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out the buyer name and phone number.' });
+            setIsSubmitting(false);
+            return;
+        }
     }
 
     const orderData = {
-      userId: currentUserId,
-      orderDate: serverTimestamp(),
-      totalAmount: subtotal,
-      status: 'processing',
-      shippingAddress: shippingAddress,
-      buyerName: buyerName,
-      phoneNumber: phoneNumber,
-      deliveryMethod: deliveryMethod,
+        userId: userId,
+        orderDate: serverTimestamp(),
+        totalAmount: subtotal,
+        status: 'processing',
+        shippingAddress: shippingAddress,
+        buyerName: buyerName,
+        phoneNumber: phoneNumber,
+        deliveryMethod: deliveryMethod,
     };
 
     try {
-      const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
-      const newOrderRef = await addDoc(orderCollectionRef, orderData);
+        const orderCollectionRef = collection(firestore, 'users', userId, 'orders');
+        const newOrderRef = await addDoc(orderCollectionRef, orderData);
 
-      const batch = writeBatch(firestore);
-      cartItems.forEach(item => {
-        const orderItemRef = doc(collection(newOrderRef, 'orderItems'));
-        const finalPrice = item.price * (1 - item.discount / 100);
-        batch.set(orderItemRef, {
-           orderId: newOrderRef.id,
-           productId: item.id,
-           quantity: item.quantity,
-           itemPrice: finalPrice,
-           name: item.name,
-           brand: item.brand,
+        const batch = writeBatch(firestore);
+        cartItems.forEach(item => {
+            const orderItemRef = doc(collection(newOrderRef, 'orderItems'));
+            const finalPrice = item.price * (1 - item.discount / 100);
+            batch.set(orderItemRef, {
+                orderId: newOrderRef.id,
+                productId: item.id,
+                quantity: item.quantity,
+                itemPrice: finalPrice,
+                name: item.name,
+                brand: item.brand,
+            });
         });
-      });
 
-      await batch.commit();
+        await batch.commit();
 
-      toast({
-        title: 'Order Placed!',
-        description: 'You will be contacted soon.',
-      });
-      
-      clearCart();
-      setBuyerName('');
-      setPhoneNumber('');
-      setCity('');
-      setNeighborhood('');
-      setStreet('');
-      setBuildingNumber('');
-      setLandmark('');
+        toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
+        
+        clearCart();
+        setBuyerName('');
+        setPhoneNumber('');
+        setCity('');
+        setNeighborhood('');
+        setStreet('');
+        setBuildingNumber('');
+        setLandmark('');
 
     } catch (error: any) {
         console.error("Error placing order:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Order Failed',
-            description: 'There was a problem placing your order. Please try again.',
-        });
+        toast({ variant: 'destructive', title: 'Order Failed', description: 'There was a problem placing your order. Please try again.' });
     } finally {
         setIsSubmitting(false);
+    }
+  };
+
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+
+    if (user) {
+      await placeOrder(user.uid);
+    } else {
+      const unsubscribe = onAuthStateChanged(auth, async (newUser) => {
+        unsubscribe(); // Unsubscribe to avoid multiple calls
+        if (newUser) {
+          await placeOrder(newUser.uid);
+        } else {
+          toast({ variant: 'destructive', title: 'Authentication Failed', description: 'Could not create a secure session. Please try again.' });
+          setIsSubmitting(false);
+        }
+      });
+      initiateAnonymousSignIn(auth);
     }
   };
 
