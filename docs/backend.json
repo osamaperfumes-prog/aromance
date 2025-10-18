@@ -1,0 +1,358 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a perfume product available for sale.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the perfume product."
+        },
+        "brand": {
+          "type": "string",
+          "description": "Brand of the perfume."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the perfume."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product image.",
+          "format": "uri"
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the perfume."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the perfume (e.g., testers, travel size)."
+        },
+        "sizeMl": {
+          "type": "number",
+          "description": "Size of the perfume bottle in milliliters."
+        },
+        "discountPercentage": {
+          "type": "number",
+          "description": "The discount percentage applied to the product (e.g., 0.2 for 20% off)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "brand",
+        "description",
+        "imageUrl",
+        "price",
+        "category",
+        "sizeMl"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Aromance website.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "rewardPoints": {
+          "type": "number",
+          "description": "Reward points accumulated by the user."
+        },
+        "wholesale": {
+          "type": "boolean",
+          "description": "Flag indicating if the user has wholesale account."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a customer review for a product.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the review."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N Review)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Review)"
+        },
+        "rating": {
+          "type": "number",
+          "description": "Rating given by the user (e.g., 1 to 5 stars)."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Text comment provided by the user."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of review submission.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "productId",
+        "userId",
+        "rating",
+        "comment",
+        "date"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Order)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Date when the order was placed.",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total amount of the order."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the order (e.g., processing, shipped, delivered)."
+        },
+        "shippingAddress": {
+          "type": "string",
+          "description": "The address the order was shipped to."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "orderDate",
+        "totalAmount",
+        "status",
+        "shippingAddress"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents an item within an order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order item."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the product in the order item."
+        },
+        "itemPrice": {
+          "type": "number",
+          "description": "Price of the item at the time of the order."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "productId",
+        "quantity",
+        "itemPrice"
+      ]
+    },
+    "RewardProgram": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RewardProgram",
+      "type": "object",
+      "description": "Represents the reward program and its point system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the reward program."
+        },
+        "pointsPerDollar": {
+          "type": "number",
+          "description": "Number of reward points earned per dollar spent."
+        },
+        "redemptionRate": {
+          "type": "number",
+          "description": "The amount that one reward point is worth in dollars."
+        }
+      },
+      "required": [
+        "id",
+        "pointsPerDollar",
+        "redemptionRate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores perfume product information.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores customer reviews for each product. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            },
+            {
+              "name": "reviewId",
+              "description": "Unique identifier for the review."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user account information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores user orders. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}/orderItems/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "Stores items within an order.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            },
+            {
+              "name": "orderItemId",
+              "description": "Unique identifier for the order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reward_program/config",
+        "definition": {
+          "entityName": "RewardProgram",
+          "schema": {
+            "$ref": "#/backend/entities/RewardProgram"
+          },
+          "description": "Stores reward program configuration.",
+          "params": []
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to optimize for security, scalability, and query performance, particularly for an e-commerce application like Aromance.  The structure adheres to Authorization Independence by avoiding hierarchical `get()` calls in security rules.  It utilizes structural segregation for homogenous security postures and adopts consistent access modeling patterns.\n\nProducts are stored in a top-level collection (`/products`) with a predictable schema. Reviews are stored in a subcollection under each product (`/products/{productId}/reviews`), including the userId denormalized within each review document to enforce consistent data integrity and enabling performant queries to retrieve a user's reviews for a specific product.\n\nUsers are stored in a top-level collection (`/users`), Orders are stored in a subcollection under each user (`/users/{userId}/orders`), and OrderItems are stored in a subcollection under each order (`/users/{userId}/orders/{orderId}/orderItems`). This structure ensures that orders and order items are directly associated with their respective users, making it easy to retrieve and manage user-specific data.  The `userId` is also added as a denormalized field to orders to ensure authorization independence. \n\nRewardProgram information is stored in a singleton document at `/reward_program/config`, which simplifies access to global reward program configurations.\n\nThis structure supports required QAPs by:\n\n*   Segregating data with different access needs into separate collections (e.g., products, users).\n*   Using path-based ownership for user-related data (`/users/{userId}/orders`) simplifies security rules and enables efficient list operations.\n*   The Membership Map pattern would be applicable if collaborative features were added in the future, for example, sharing draft orders between multiple users."
+  }
+}

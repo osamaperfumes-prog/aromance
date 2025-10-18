@@ -1,0 +1,150 @@
+/**
+ * @file Firestore Security Rules for Aromance.
+ *
+ * @core_philosophy This ruleset enforces a strict user-ownership model for user-specific data
+ * and allows public read access to product information.  It prioritizes authorization independence
+ * and data consistency, especially regarding user relationships.
+ *
+ * @data_structure
+ * - `/products/{productId}`: Stores product information, publicly readable.
+ * - `/products/{productId}/reviews/{reviewId}`: Stores product reviews, accessible to all for reading, but with restricted write access based on user ID.
+ * - `/users/{userId}`: Stores user profile information, only accessible to the user themselves.
+ * - `/users/{userId}/orders/{orderId}`: Stores user orders, only accessible to the user themselves.
+ * - `/users/{userId}/orders/{orderId}/orderItems/{orderItemId}`: Stores order items, only accessible to the user themselves.
+ * - `/reward_program/config`: Stores reward program configuration, no security rules implemented yet.
+ *
+ * @key_security_decisions
+ * - Products are publicly readable but not writable through the API.
+ * - User data is strictly private, accessible only to the owning user.
+ * - Listing of user documents is disallowed for privacy.
+ * - Reviews can be read by anyone but only created/updated/deleted by the user who created the review.
+ *
+ * @denormalization_for_authorization
+ * - The `Review` documents in the `/products/{productId}/reviews/{reviewId}` collection include a denormalized `userId` field to enable authorization rules that check if the requesting user is the owner of the review.
+ * - The `Order` documents in the `/users/{userId}/orders/{orderId}` collection include a denormalized `userId` field to enable authorization rules that check if the requesting user is the owner of the order.
+ *
+ * @structural_segregation
+ * - Public product data is stored in a top-level collection (`/products`) separate from private user data under `/users/{userId}`.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows anyone to read product information, but restricts creation, update, and deletion.
+     * @path /products/{productId}
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Public read access with no write access.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows anyone to read reviews, but restricts creation, update, and deletion to the user who created the review.
+     * @path /products/{productId}/reviews/{reviewId}
+     * @allow (get, list)
+     * @allow (create) A user with auth `request.auth.uid` can create a review if `request.resource.data.userId == request.auth.uid`
+     * @allow (update, delete) A user with auth `request.auth.uid` can update or delete a review if `resource.data.userId == request.auth.uid` and the document exists
+     * @deny (create) A user cannot create a review if `request.resource.data.userId != request.auth.uid`
+     * @deny (update, delete) A user cannot update or delete a review if `resource.data.userId != request.auth.uid` or the document does not exist
+     * @principle Public read, owner-only writes, and enforces userId consistency for review ownership.
+     */
+    match /products/{productId}/reviews/{reviewId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isExistingOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Restricts access to user documents to the user themselves.
+     * @path /users/{userId}
+     * @allow (create) A user with auth `request.auth.uid` can create their own user document if `userId == request.auth.uid`
+     * @allow (get, update, delete) A user with auth `request.auth.uid` can get, update, or delete their own user document if `userId == request.auth.uid` and the document exists
+     * @deny (create) A user cannot create a user document for another user if `userId != request.auth.uid`
+     * @deny (get, update, delete) A user cannot get, update, or delete a user document for another user if `userId != request.auth.uid` or the document does not exist
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Disallow listing users for privacy.
+      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Restricts access to order documents to the user who owns the order.
+     * @path /users/{userId}/orders/{orderId}
+     * @allow (create) A user with auth `request.auth.uid` can create an order if `userId == request.auth.uid`
+     * @allow (get, update, delete) A user with auth `request.auth.uid` can get, update, or delete their own order if `userId == request.auth.uid` and the document exists
+     * @deny (create) A user cannot create an order for another user if `userId != request.auth.uid`
+     * @deny (get, update, delete) A user cannot get, update, or delete an order for another user if `userId != request.auth.uid` or the document does not exist
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/orders/{orderId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Restricts access to order item documents to the user who owns the order.
+     * @path /users/{userId}/orders/{orderId}/orderItems/{orderItemId}
+     * @allow (create) A user with auth `request.auth.uid` can create an order item if `userId == request.auth.uid`
+     * @allow (get, update, delete) A user with auth `request.auth.uid` can get, update, or delete their own order item if `userId == request.auth.uid` and the document exists
+     * @deny (create) A user cannot create an order item for another user if `userId != request.auth.uid`
+     * @deny (get, update, delete) A user cannot get, update, or delete an order item for another user if `userId != request.auth.uid` or the document does not exist
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/orders/{orderId}/orderItems/{orderItemId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows read access to the reward program configuration, but restricts creation, update, and deletion.
+     * @path /reward_program/config
+     * @allow (get, list)
+     * @deny (create, update, delete)
+     * @principle Public read access with no write access.
+     */
+    match /reward_program/config {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the requested user ID matches the authenticated user's ID.
+     * @param {string} userId The user ID to check against.
+     * @return {boolean} True if the user ID matches, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the requested user ID matches the authenticated user's ID and the document exists.
+     * @param {string} userId The user ID to check against.
+     * @return {boolean} True if the user ID matches and document exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+  }
+}
