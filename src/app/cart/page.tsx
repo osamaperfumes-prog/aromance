@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc, writeBatch } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -42,42 +43,36 @@ export default function CartPage() {
     setIsSubmitting(true);
     let currentUserId = user?.uid;
 
+    // If there's no user, sign in anonymously and wait for the user object to be available.
     if (!user) {
       try {
-        initiateAnonymousSignIn(auth);
-        toast({
-          title: 'Signing in...',
-          description: 'Please wait while we prepare your checkout.',
-        });
-        // This is not ideal, but we need to wait for the auth state to change.
-        // A better solution would involve waiting for the user object to be available.
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // After waiting, check auth.currentUser directly.
-        currentUserId = auth.currentUser?.uid;
-
-        if (!currentUserId) {
-          toast({
-            variant: 'destructive',
-            title: 'Authentication Failed',
-            description: 'Could not sign you in to complete the purchase. Please try again.',
+        await new Promise<string>((resolve, reject) => {
+          const unsubscribe = auth.onAuthStateChanged(newUser => {
+            if (newUser) {
+              unsubscribe();
+              resolve(newUser.uid);
+            }
           });
-          setIsSubmitting(false);
-          return;
-        }
+          initiateAnonymousSignIn(auth); // non-blocking
+          setTimeout(() => {
+            unsubscribe();
+            reject(new Error("Anonymous sign-in timed out."));
+          }, 5000);
+        }).then(uid => {
+          currentUserId = uid;
+        });
 
       } catch (error) {
         console.error('Anonymous sign-in failed:', error);
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: 'An error occurred during sign-in. Please try again.',
+          title: 'Authentication Error',
+          description: 'Could not prepare your session for checkout. Please try again.',
         });
         setIsSubmitting(false);
         return;
       }
     }
-
 
     if (!currentUserId) {
         toast({
@@ -104,28 +99,7 @@ export default function CartPage() {
     }
 
     try {
-      // 1. Create the Order document
-      const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
-      const newOrderRef = doc(orderCollectionRef); // Create a new doc reference to get the ID
-
-      // 2. Create a batch to add all OrderItems and the Order itself
-      const batch = writeBatch(firestore);
-
-      cartItems.forEach(item => {
-        const orderItemRef = doc(collection(newOrderRef, 'orderItems')); // Doc ref inside subcollection
-        const finalPrice = item.price * (1 - item.discount / 100);
-        batch.set(orderItemRef, {
-           orderId: newOrderRef.id,
-           productId: item.id,
-           quantity: item.quantity,
-           itemPrice: finalPrice,
-           name: item.name, // Denormalize for easier display
-           brand: item.brand, // Denormalize for easier display
-        });
-      });
-      
-      // Add the order to the batch
-      batch.set(newOrderRef, {
+      const orderData = {
         userId: currentUserId,
         orderDate: serverTimestamp(),
         totalAmount: subtotal,
@@ -134,9 +108,37 @@ export default function CartPage() {
         buyerName: buyerName,
         phoneNumber: phoneNumber,
         deliveryMethod: deliveryMethod,
+      };
+
+      const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
+      const newOrderRef = await addDocumentNonBlocking(orderCollectionRef, orderData);
+
+      if (!newOrderRef) {
+        // The error is already handled by the non-blocking function's catch block
+        // and emitted globally. We just need to stop execution here.
+         toast({
+            variant: "destructive",
+            title: "Order Failed",
+            description: "Could not create order reference. Please check permissions.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const batch = writeBatch(firestore);
+      cartItems.forEach(item => {
+        const orderItemRef = doc(collection(newOrderRef, 'orderItems'));
+        const finalPrice = item.price * (1 - item.discount / 100);
+        batch.set(orderItemRef, {
+           orderId: newOrderRef.id,
+           productId: item.id,
+           quantity: item.quantity,
+           itemPrice: finalPrice,
+           name: item.name,
+           brand: item.brand,
+        });
       });
 
-      // 3. Commit the batch
       await batch.commit();
 
       toast({
@@ -145,7 +147,6 @@ export default function CartPage() {
       });
       
       clearCart();
-      // Reset form fields
       setBuyerName('');
       setPhoneNumber('');
       setCity('');
@@ -156,10 +157,6 @@ export default function CartPage() {
 
     } catch (error: any) {
         console.error("Error placing order:", error);
-        if (error.request) {
-            // This is a FirestorePermissionError
-            throw error;
-        }
         toast({
             variant: 'destructive',
             title: 'Order Failed',
@@ -335,3 +332,5 @@ export default function CartPage() {
     </div>
   );
 }
+
+    
