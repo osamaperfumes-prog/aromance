@@ -10,17 +10,16 @@ import { formatPrice } from '@/lib/utils';
 import { Trash2, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, addDoc } from 'firebase/firestore';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
-  const { firestore, auth, user, isUserLoading } = useFirebase();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
 
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -59,13 +58,6 @@ export default function CartPage() {
     }
     
     setIsSubmitting(true);
-    
-    if (!user) {
-        initiateAnonymousSignIn(auth);
-        toast({ title: 'Creating secure session...', description: 'Please click "Place your order" again to confirm.' });
-        setIsSubmitting(false);
-        return;
-    }
 
     let shippingAddress = 'Pickup';
     if (deliveryMethod === 'delivery') {
@@ -73,7 +65,6 @@ export default function CartPage() {
     }
 
     const orderData = {
-        userId: user.uid,
         orderDate: serverTimestamp(),
         totalAmount: subtotal,
         status: 'processing',
@@ -81,27 +72,18 @@ export default function CartPage() {
         buyerName: buyerName,
         phoneNumber: phoneNumber,
         deliveryMethod: deliveryMethod,
+        items: cartItems.map(item => ({
+            productId: item.id,
+            name: item.name,
+            brand: item.brand,
+            quantity: item.quantity,
+            itemPrice: item.price * (1 - item.discount / 100),
+        }))
     };
 
     try {
-        const orderCollectionRef = collection(firestore, 'users', user.uid, 'orders');
-        const newOrderRef = await addDoc(orderCollectionRef, orderData);
-
-        const batch = writeBatch(firestore);
-        cartItems.forEach(item => {
-            const orderItemRef = doc(collection(newOrderRef, 'orderItems'));
-            const finalPrice = item.price * (1 - item.discount / 100);
-            batch.set(orderItemRef, {
-                orderId: newOrderRef.id,
-                productId: item.id,
-                quantity: item.quantity,
-                itemPrice: finalPrice,
-                name: item.name,
-                brand: item.brand,
-            });
-        });
-
-        await batch.commit();
+        const orderCollectionRef = collection(firestore, 'orders');
+        await addDoc(orderCollectionRef, orderData);
 
         toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
         
@@ -276,8 +258,8 @@ export default function CartPage() {
                    </div>
                 )}
                 
-                <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting || isUserLoading}>
-                  {isUserLoading ? 'Loading...' : user ? 'Place your order' : 'Continue as Guest'}
+                <Button className="w-full" size="lg" onClick={handleCheckout} disabled={isSubmitting}>
+                  {isSubmitting ? 'Placing Order...' : 'Place your order'}
                 </Button>
               </CardContent>
             </Card>
@@ -287,3 +269,5 @@ export default function CartPage() {
     </div>
   );
 }
+
+    

@@ -145,10 +145,6 @@
           "type": "string",
           "description": "Unique identifier for the order."
         },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Order)"
-        },
         "orderDate": {
           "type": "string",
           "description": "Date when the order was placed.",
@@ -181,7 +177,6 @@
       },
       "required": [
         "id",
-        "userId",
         "orderDate",
         "totalAmount",
         "status",
@@ -254,8 +249,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -313,45 +307,17 @@
         }
       },
       {
-        "path": "/users/{userId}/orders/{orderId}",
+        "path": "/orders/{orderId}",
         "definition": {
           "entityName": "Order",
           "schema": {
             "$ref": "#/backend/entities/Order"
           },
-          "description": "Stores user orders. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores guest and user orders.",
           "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            },
             {
               "name": "orderId",
               "description": "Unique identifier for the order."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/orders/{orderId}/orderItems/{orderItemId}",
-        "definition": {
-          "entityName": "OrderItem",
-          "schema": {
-            "$ref": "#/backend/entities/OrderItem"
-          },
-          "description": "Stores items within an order.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user."
-            },
-            {
-              "name": "orderId",
-              "description": "Unique identifier for the order."
-            },
-            {
-              "name": "orderItemId",
-              "description": "Unique identifier for the order item."
             }
           ]
         }
@@ -368,6 +334,7 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to optimize for security, scalability, and query performance, particularly for an e-commerce application like Aromance.  The structure adheres to Authorization Independence by avoiding hierarchical `get()` calls in security rules.  It utilizes structural segregation for homogenous security postures and adopts consistent access modeling patterns.\n\nProducts are stored in a top-level collection (`/products`) with a predictable schema. Reviews are stored in a subcollection under each product (`/products/{productId}/reviews`), including the userId denormalized within each review document to enforce consistent data integrity and enabling performant queries to retrieve a user's reviews for a specific product.\n\nUsers are stored in a top-level collection (`/users`), Orders are stored in a subcollection under each user (`/users/{userId}/orders`), and OrderItems are stored in a subcollection under each order (`/users/{userId}/orders/{orderId}/orderItems`). This structure ensures that orders and order items are directly associated with their respective users, making it easy to retrieve and manage user-specific data.  The `userId` is also added as a denormalized field to orders to ensure authorization independence. \n\nRewardProgram information is stored in a singleton document at `/reward_program/config`, which simplifies access to global reward program configurations.\n\nThis structure supports required QAPs by:\n\n*   Segregating data with different access needs into separate collections (e.g., products, users).\n*   Using path-based ownership for user-related data (`/users/{userId}/orders`) simplifies security rules and enables efficient list operations.\n*   The Membership Map pattern would be applicable if collaborative features were added in the future, for example, sharing draft orders between multiple users."
+    "reasoning": "The Firestore structure is designed to optimize for security, scalability, and query performance, particularly for an e-commerce application like Aromance. It now supports fully anonymous checkouts by placing all orders in a top-level 'orders' collection, removing the dependency on a user ID for order creation. User-specific data remains segregated.\n\nProducts are stored in a top-level collection (`/products`). Reviews are a subcollection under each product (`/products/{productId}/reviews`).\n\nUsers are stored in a top-level collection (`/users`) for authenticated users who are not guests.\n\nOrders are now stored in a top-level collection (`/orders/{orderId}`) to allow unauthenticated writes, enabling a seamless guest checkout experience. Order items can be stored as a subcollection or as an array within the order document, depending on query needs. For simplicity, they are represented within the order entity itself.\n\nRewardProgram information is stored in a singleton document at `/reward_program/config` for easy global access."
   }
 }
+    
