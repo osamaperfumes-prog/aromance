@@ -32,9 +32,9 @@ export default function Home() {
       <section className="w-full py-12 md:py-20 bg-card">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-8">Shop By Type</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => {
-              const image = PlaceHolderImages.find(img => img.id === `shop-by-type-${index + 1}`);
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category) => {
+              const image = PlaceHolderImages.find(img => img.id === category.imageId);
               return (
                 <Link href="/products" key={category.title}>
                   <Card className="overflow-hidden group hover:shadow-xl transition-shadow duration-300">

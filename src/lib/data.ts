@@ -13,7 +13,6 @@ export const trustBadges: TrustBadge[] = [
 ];
 
 export const categories: Category[] = [
-  { title: 'Testers', description: 'Full-size fragrances without the fancy packaging.', imageId: 'shop-by-type-1' },
   { title: 'Travel Size', description: 'Perfect for on-the-go.', imageId: 'shop-by-type-2' },
   { title: 'Gift Sets', description: 'Beautifully packaged for any occasion.', imageId: 'shop-by-type-3' },
   { title: 'Samples', description: 'Discover your new favorite scent.', imageId: 'shop-by-type-4' },
