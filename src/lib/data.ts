@@ -10,7 +10,6 @@ export const navLinks: NavLink[] = [
 ];
 
 export const trustBadges: TrustBadge[] = [
-  { text: '100% Authentic Fragrances', icon: ShieldCheck },
   { text: 'Delivery to Abdali Mall', icon: Send },
 ];
 
