@@ -25,6 +25,10 @@ export type Product = {
   imageId: string;
 };
 
+export type CartItem = Product & {
+  quantity: number;
+};
+
 export type Testimonial = {
   author: string;
   quote: string;

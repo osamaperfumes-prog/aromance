@@ -6,8 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { navLinks } from '@/lib/data';
 import { Search, Heart, ShoppingCart, Menu } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 export const Header = () => {
+  const { cartItems } = useCart();
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto">
@@ -58,11 +62,15 @@ export const Header = () => {
             <Button variant="ghost" size="icon" aria-label="Wishlist">
               <Heart className="h-6 w-6" />
             </Button>
-            <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative">
-              <ShoppingCart className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
-                0
-              </span>
+            <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative" asChild>
+              <Link href="/cart">
+                <ShoppingCart className="h-6 w-6" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
             </Button>
           </div>
         </div>
