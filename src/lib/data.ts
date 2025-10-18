@@ -3,7 +3,6 @@ import { Award, Bot, CheckCircle, Lock, Package, PackageCheck, Send, ShieldCheck
 import { WhatsappIcon } from '@/components/WhatsappIcon';
 
 export const navLinks: NavLink[] = [
-  { name: 'Testers', href: '/products' },
   { name: 'Travel Size', href: '/products' },
   { name: 'Samples', href: '/products' },
   { name: 'Perfume', href: '/products' },
