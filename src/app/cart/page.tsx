@@ -125,44 +125,48 @@ export default function CartPage() {
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label htmlFor="buyer-name">اسم المشتري</Label>
+                  <Label htmlFor="buyer-name">Buyer Name</Label>
                   <Input id="buyer-name" placeholder="Enter your name" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone-number">رقم الهاتف</Label>
+                  <Label htmlFor="phone-number">Phone Number</Label>
                   <Input id="phone-number" type="tel" placeholder="Enter your phone number" />
                 </div>
                 <div className="space-y-2">
-                  <Label>توصيل او استلام</Label>
+                  <Label>Delivery or Pickup</Label>
                   <RadioGroup defaultValue="delivery" value={deliveryMethod} onValueChange={setDeliveryMethod} className="flex gap-4 pt-2">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="delivery" id="delivery" />
-                      <Label htmlFor="delivery">توصيل</Label>
+                      <Label htmlFor="delivery">Delivery</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="pickup" id="pickup" />
-                      <Label htmlFor="pickup">استلام</Label>
+                      <Label htmlFor="pickup">Pickup</Label>
                     </div>
                   </RadioGroup>
                 </div>
 
                 {deliveryMethod === 'delivery' && (
                    <div className="space-y-4 pt-4 border-t">
-                     <h3 className="font-semibold text-lg">الموقع</h3>
+                     <h3 className="font-semibold text-lg">Location</h3>
                      <div className="space-y-2">
-                       <Label htmlFor="city">المدينة</Label>
+                       <Label htmlFor="city">City</Label>
                        <Input id="city" placeholder="e.g. Amman" />
                      </div>
                      <div className="space-y-2">
-                       <Label htmlFor="neighborhood">الحي</Label>
+                       <Label htmlFor="neighborhood">Neighborhood</Label>
                        <Input id="neighborhood" placeholder="e.g. Abdoun" />
                      </div>
                      <div className="space-y-2">
-                       <Label htmlFor="street">الشارع</Label>
+                       <Label htmlFor="street">Street</Label>
                        <Input id="street" placeholder="e.g. 123 Main St" />
                      </div>
+                      <div className="space-y-2">
+                       <Label htmlFor="building-number">Building Number</Label>
+                       <Input id="building-number" placeholder="e.g. Building 1, Floor 2" />
+                     </div>
                      <div className="space-y-2">
-                       <Label htmlFor="landmark">اقرب معلم بارز</Label>
+                       <Label htmlFor="landmark">Nearest Landmark</Label>
                        <Input id="landmark" placeholder="e.g. Near the big mosque" />
                      </div>
                    </div>
