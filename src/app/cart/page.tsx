@@ -33,28 +33,22 @@ export default function CartPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const subtotal = cartItems.reduce((sum, item) => {
-    const price = item.price * (1 - item.discount / 100);
+    const price = item.price * (1 - (item.discount || 0) / 100);
     return sum + price * item.quantity;
   }, 0);
   
-  const validateForm = () => {
+
+  const handleCheckout = async () => {
     if (deliveryMethod === 'delivery') {
         if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required buyer and address fields.' });
-            return false;
+            return;
         }
     } else {
         if (!buyerName || !phoneNumber) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out the buyer name and phone number.' });
-            return false;
+            return;
         }
-    }
-    return true;
-  }
-
-  const handleCheckout = async () => {
-    if (!validateForm()) {
-        return;
     }
     
     setIsSubmitting(true);
@@ -77,7 +71,7 @@ export default function CartPage() {
             name: item.name,
             brand: item.brand,
             quantity: item.quantity,
-            itemPrice: item.price * (1 - item.discount / 100),
+            itemPrice: item.price * (1 - (item.discount || 0) / 100),
         }))
     };
 
@@ -130,7 +124,7 @@ export default function CartPage() {
 
             {cartItems.map((item) => {
                 const image = PlaceHolderImages.find(img => img.id === item.imageId);
-                const finalPrice = item.price * (1 - item.discount / 100);
+                const finalPrice = item.price * (1 - (item.discount || 0) / 100);
               return (
                 <div key={item.id} className="flex flex-col md:flex-row items-center border-b py-4">
                   <div className="w-full md:w-1/2 flex items-start md:items-center gap-4 p-2">
@@ -269,5 +263,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-    
