@@ -16,7 +16,7 @@ export const navLinks: NavLink[] = [
 
 export const trustBadges: TrustBadge[] = [
   { text: '100% Authentic Fragrances', icon: ShieldCheck },
-  { text: 'Items Ship Same Day', icon: Send },
+  { text: 'Delivery to Abdali Mall', icon: Send },
 ];
 
 export const categories: Category[] = [
