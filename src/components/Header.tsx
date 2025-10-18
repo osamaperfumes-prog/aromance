@@ -5,20 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { navLinks } from '@/lib/data';
-import { Search, User, Heart, ShoppingCart, Menu, Phone } from 'lucide-react';
+import { Search, User, Heart, ShoppingCart, Menu } from 'lucide-react';
 
 export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto">
-        {/* Top bar with contact */}
-        <div className="flex justify-end items-center h-10 text-sm">
-          <a href="tel:1-800-555-1234" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-            <Phone className="w-4 h-4" />
-            <span>1-800-555-1234</span>
-          </a>
-        </div>
-
         {/* Main Header */}
         <div className="flex items-center justify-between py-4">
           <div className="lg:hidden">
