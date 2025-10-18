@@ -5,7 +5,6 @@ import { WhatsappIcon } from '@/components/WhatsappIcon';
 export const navLinks: NavLink[] = [
   { name: 'Testers', href: '/products' },
   { name: 'Travel Size', href: '/products' },
-  { name: 'Gift Sets', href: '/products' },
   { name: 'Samples', href: '/products' },
   { name: 'Perfume', href: '/products' },
 ];
