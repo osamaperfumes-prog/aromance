@@ -19,6 +19,7 @@ export default function AdminPage() {
   }, [user, isUserLoading, router]);
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       router.push('/');
