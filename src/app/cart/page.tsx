@@ -15,9 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, addDoc } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -44,9 +45,8 @@ export default function CartPage() {
 
     if (isUserLoading) {
       toast({
-        variant: 'destructive',
-        title: 'Authentication in progress',
-        description: 'Please wait a moment while we verify your session.',
+        title: 'Verifying session...',
+        description: 'Please wait a moment.',
       });
       setIsSubmitting(false);
       return;
@@ -55,57 +55,73 @@ export default function CartPage() {
     let currentUserId = user?.uid;
 
     if (!currentUserId) {
-        initiateAnonymousSignIn(auth);
-        toast({
-            title: "Creating Session",
-            description: "We're preparing your secure checkout. Please click 'Place your order' again in a moment.",
-        });
-        setIsSubmitting(false);
-        return;
+      initiateAnonymousSignIn(auth);
+      toast({
+        title: 'Creating Secure Session',
+        description: "We're preparing your checkout. Please click 'Place your order' again in a moment.",
+      });
+      setIsSubmitting(false);
+      return;
     }
 
     let shippingAddress = 'Pickup';
     if (deliveryMethod === 'delivery') {
-      if (!city || !neighborhood || !street || !buildingNumber) {
+      if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
         toast({
           variant: 'destructive',
-          title: 'Missing Address',
-          description: 'Please fill out all required delivery address fields.',
+          title: 'Missing Information',
+          description: 'Please fill out all required buyer and address fields.',
         });
         setIsSubmitting(false);
         return;
       }
-      shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark}`;
+      shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
+    } else {
+       if (!buyerName || !phoneNumber) {
+        toast({
+          variant: 'destructive',
+          title: 'Missing Information',
+          description: 'Please fill out the buyer name and phone number.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
     }
 
-    try {
-      const orderData = {
-        userId: currentUserId,
-        orderDate: serverTimestamp(),
-        totalAmount: subtotal,
-        status: 'processing',
-        shippingAddress: shippingAddress,
-        buyerName: buyerName,
-        phoneNumber: phoneNumber,
-        deliveryMethod: deliveryMethod,
-      };
+    const orderData = {
+      userId: currentUserId,
+      orderDate: serverTimestamp(),
+      totalAmount: subtotal,
+      status: 'processing',
+      shippingAddress: shippingAddress,
+      buyerName: buyerName,
+      phoneNumber: phoneNumber,
+      deliveryMethod: deliveryMethod,
+    };
 
+    try {
       const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
-      // The addDocumentNonBlocking function now returns a Promise<DocumentReference | undefined>
-      const newOrderRef = await addDocumentNonBlocking(orderCollectionRef, orderData);
+      const newOrderRef = await addDoc(orderCollectionRef, orderData)
+        .catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+              path: orderCollectionRef.path,
+              operation: 'create',
+              requestResourceData: orderData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            // Return undefined to indicate failure
+            return undefined;
+        });
 
       if (!newOrderRef) {
-        // The error is already handled by the non-blocking function's catch block
-        // and emitted globally. We just need to stop execution here.
-         toast({
-            variant: "destructive",
-            title: "Order Failed",
-            description: "Could not create order reference. Please check permissions.",
+        toast({
+          variant: "destructive",
+          title: "Order Failed",
+          description: "Could not create your order. Please check your connection or try again.",
         });
         setIsSubmitting(false);
         return;
       }
-
 
       const batch = writeBatch(firestore);
       cartItems.forEach(item => {
