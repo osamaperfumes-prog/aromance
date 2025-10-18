@@ -17,7 +17,7 @@ export default function Home() {
       {/* Trust Badges */}
       <section className="w-full bg-primary-foreground py-3">
         <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 text-center">
             {trustBadges.map((badge, index) => (
               <div key={index} className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
                 <badge.icon className="w-5 h-5 text-accent" />

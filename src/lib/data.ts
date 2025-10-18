@@ -15,9 +15,6 @@ export const navLinks: NavLink[] = [
 ];
 
 export const trustBadges: TrustBadge[] = [
-  { text: 'Over 20 Million Customers', icon: Award },
-  { text: 'Free Shipping Over $49', icon: Truck },
-  { text: 'Safe & Secure Checkout', icon: Lock },
   { text: '100% Authentic Fragrances', icon: ShieldCheck },
   { text: 'Items Ship Same Day', icon: Send },
 ];
