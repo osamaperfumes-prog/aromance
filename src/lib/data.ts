@@ -91,9 +91,6 @@ export const footerLinks: FooterLink[] = [
     title: 'About Aromance',
     links: [
       { name: 'About Us', href: '#' },
-      { name: 'Careers', href: '#' },
-      { name: 'Affiliates', href: '#' },
-      { name: 'Authenticity', href: '#' },
     ],
   },
   {
