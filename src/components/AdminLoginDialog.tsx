@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
+  const router = useRouter();
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -34,9 +36,10 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: 'Login Successful',
-        description: 'Welcome, Admin!',
+        description: 'Redirecting to Admin Dashboard...',
       });
       onOpenChange(false);
+      router.push('/admin');
     } catch (error: any) {
       console.error('Admin login error:', error);
       toast({
