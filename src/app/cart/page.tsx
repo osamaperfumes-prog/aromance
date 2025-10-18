@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -23,9 +24,9 @@ export default function CartPage() {
   }, 0);
 
   return (
-    <div className="container mx-auto py-12 md:py-20">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-6xl">Your Cart</h1>
+    <div className="container mx-auto py-8 md:py-12">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl">Your Cart</h1>
       </div>
 
       {cartItems.length === 0 ? (
@@ -36,7 +37,7 @@ export default function CartPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2">
             <div className="border-b mb-4 hidden md:flex font-semibold text-sm text-muted-foreground uppercase">
                 <div className="w-1/2 p-2">Product</div>
@@ -99,32 +100,30 @@ export default function CartPage() {
                 <Button variant="outline" onClick={clearCart}>Clear Cart</Button>
              </div>
           </div>
-          <div className="lg:col-span-1 space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between mb-2">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
-                </div>
-                <div className="flex justify-between mb-4 text-muted-foreground">
-                  <span>Shipping</span>
-                  <span>Calculated at next step</span>
-                </div>
-                <div className="border-t pt-4 flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>{formatPrice(subtotal)}</span>
-                </div>
-              </CardContent>
-            </Card>
-
+          <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Order Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Shipping</span>
+                      <span>Calculated at next step</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total</span>
+                      <span>{formatPrice(subtotal)}</span>
+                    </div>
+                </div>
+                
+                <Separator />
+
                 <div className="space-y-2">
                   <Label htmlFor="buyer-name">اسم المشتري</Label>
                   <Input id="buyer-name" placeholder="Enter your name" />
@@ -168,10 +167,10 @@ export default function CartPage() {
                      </div>
                    </div>
                 )}
+                
+                <Button className="w-full" size="lg">Proceed to Checkout</Button>
               </CardContent>
             </Card>
-            
-            <Button className="w-full" size="lg">Proceed to Checkout</Button>
           </div>
         </div>
       )}
