@@ -114,45 +114,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Rewards, Wholesale, and Factor */}
-      <section className="w-full py-12 md:py-20">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Rewards */}
-            <div className="space-y-4">
-              <rewards.icon className="w-10 h-10 text-accent" />
-              <h3 className="text-2xl font-bold text-primary">{rewards.title}</h3>
-              <p className="text-muted-foreground">{rewards.description}</p>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Link href="#">{rewards.cta}</Link>
-              </Button>
-            </div>
-            {/* Wholesale */}
-            <div className="space-y-4">
-               <wholesale.icon className="w-10 h-10 text-accent" />
-              <h3 className="text-2xl font-bold text-primary">{wholesale.title}</h3>
-              <p className="text-muted-foreground">{wholesale.description}</p>
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Link href="#">{wholesale.cta}</Link>
-              </Button>
-            </div>
-            {/* The Aromance Factor */}
-            <div className="space-y-4">
-               <aromanceFactor.icon className="w-10 h-10 text-accent" />
-              <h3 className="text-2xl font-bold text-primary">{aromanceFactor.title}</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                {aromanceFactor.points.map((point, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <point.icon className="w-5 h-5 mt-1 text-accent shrink-0" />
-                    <span><strong>{point.title}:</strong> {point.description}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <Separator />
 
       {/* Email Signup */}
