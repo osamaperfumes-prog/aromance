@@ -17,8 +17,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, addDoc } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
@@ -101,27 +99,7 @@ export default function CartPage() {
 
     try {
       const orderCollectionRef = collection(firestore, 'users', currentUserId, 'orders');
-      const newOrderRef = await addDoc(orderCollectionRef, orderData)
-        .catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-              path: orderCollectionRef.path,
-              operation: 'create',
-              requestResourceData: orderData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            // Return undefined to indicate failure
-            return undefined;
-        });
-
-      if (!newOrderRef) {
-        toast({
-          variant: "destructive",
-          title: "Order Failed",
-          description: "Could not create your order. Please check your connection or try again.",
-        });
-        setIsSubmitting(false);
-        return;
-      }
+      const newOrderRef = await addDoc(orderCollectionRef, orderData);
 
       const batch = writeBatch(firestore);
       cartItems.forEach(item => {
@@ -330,5 +308,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-    
