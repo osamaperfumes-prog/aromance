@@ -1,5 +1,6 @@
 import type { Category, Product, Testimonial, FooterLink, NavLink, TrustBadge, InfoSection, AromanceFactorPoint } from './types';
-import { Award, Bot, CheckCircle, Lock, Package, PackageCheck, Send, ShieldCheck, ShoppingBag, Truck, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Award, Bot, CheckCircle, Lock, Package, PackageCheck, Send, ShieldCheck, ShoppingBag, Truck, Facebook, Instagram } from 'lucide-react';
+import { WhatsappIcon } from '@/components/WhatsappIcon';
 
 export const navLinks: NavLink[] = [
   { name: 'Testers', href: '/products' },
@@ -108,7 +109,6 @@ export const footerLinks: FooterLink[] = [
 
 export const socialLinks = [
   { name: 'Facebook', href: '#', icon: Facebook },
-  { name: 'Twitter', href: '#', icon: Twitter },
   { name: 'Instagram', href: '#', icon: Instagram },
-  { name: 'Youtube', href: '#', icon: Youtube },
+  { name: 'WhatsApp', href: 'https://wa.me/18005551234', icon: WhatsappIcon },
 ]
