@@ -14,12 +14,13 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
-  const { firestore } = useFirebase();
+  // Get firestore instance directly to avoid auth-dependent hooks
+  const { firestore } = initializeFirebase();
   const { toast } = useToast();
 
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -76,6 +77,9 @@ export default function CartPage() {
     };
 
     try {
+        if (!firestore) {
+            throw new Error("Firestore is not initialized.");
+        }
         const orderCollectionRef = collection(firestore, 'orders');
         await addDoc(orderCollectionRef, orderData);
 
