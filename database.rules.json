@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "orders": {
+      // Only authenticated users (admins) can read the full list of orders.
+      ".read": "auth != null",
+      // Anyone can write a new order.
+      ".write": "!data.exists() && newData.exists()",
+      "$orderId": {
+        // Only authenticated users (admins) can read, update, or delete a specific order.
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    // Default deny all other reads/writes
+    ".read": false,
+    ".write": false
+  }
+}
