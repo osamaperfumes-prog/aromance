@@ -22,6 +22,7 @@ export default function AdminPage() {
     if (!auth) return;
     try {
       await signOut(auth);
+      // After signing out, redirect to the homepage
       router.push('/');
     } catch (error) {
       console.error('Failed to log out:', error);

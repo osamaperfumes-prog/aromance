@@ -53,7 +53,7 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'Invalid email or password.',
+        description: 'Invalid email or password.',
       });
     } finally {
       setIsLoading(false);
