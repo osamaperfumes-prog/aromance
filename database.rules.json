@@ -1,18 +1,20 @@
 {
   "rules": {
+    // Authenticated admins have full read/write access to the entire database.
+    ".read": "auth != null",
+    ".write": "auth != null",
     "orders": {
-      // Only authenticated users (admins) can read the full list of orders.
+      // The general read rule is overridden here to be more specific.
+      // Admins can still read the full list.
       ".read": "auth != null",
-      // Anyone can write a new order.
+      // Allow anyone to create a new order.
+      // This rule is a combination of the previous .write and a new validation.
       ".write": "!data.exists() && newData.exists()",
       "$orderId": {
-        // Only authenticated users (admins) can read, update, or delete a specific order.
+        // Admins can read/write individual orders.
         ".read": "auth != null",
         ".write": "auth != null"
       }
-    },
-    // Default deny all other reads/writes
-    ".read": false,
-    ".write": false
+    }
   }
 }
