@@ -15,12 +15,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { initializeFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, push, set, serverTimestamp } from "firebase/database";
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
-  // Get firestore instance directly to avoid auth-dependent hooks
-  const { firestore } = initializeFirebase();
+  // Get database instance directly to avoid auth-dependent hooks
+  const { database } = initializeFirebase();
   const { toast } = useToast();
 
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -38,7 +38,6 @@ export default function CartPage() {
     return sum + price * item.quantity;
   }, 0);
   
-
   const handleCheckout = async () => {
     if (deliveryMethod === 'delivery') {
         if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
@@ -77,11 +76,12 @@ export default function CartPage() {
     };
 
     try {
-        if (!firestore) {
-            throw new Error("Firestore is not initialized.");
+        if (!database) {
+            throw new Error("Realtime Database is not initialized.");
         }
-        const orderCollectionRef = collection(firestore, 'orders');
-        await addDoc(orderCollectionRef, orderData);
+        const ordersRef = ref(database, 'orders');
+        const newOrderRef = push(ordersRef);
+        await set(newOrderRef, orderData);
 
         toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
         
