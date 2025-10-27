@@ -51,9 +51,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </Link>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-2 flex-wrap">
             <CardDescription>{product.brand}</CardDescription>
-            {product.category && <Badge variant="outline">{product.category}</Badge>}
+            <div className="flex gap-1 flex-wrap justify-end">
+              {Array.isArray(product.category) && product.category.map(cat => (
+                <Badge key={cat} variant="outline">{cat}</Badge>
+              ))}
+            </div>
         </div>
         <CardTitle className="mt-1 text-base font-semibold leading-tight">
           <Link href={`/products/${product.id}`}>{product.name}</Link>

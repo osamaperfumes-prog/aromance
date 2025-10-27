@@ -24,7 +24,7 @@ export type Product = {
   price: number;
   discount: number; // Percentage
   imageId: string;
-  category: string;
+  category: string[];
 };
 
 export type CartItem = Product & {

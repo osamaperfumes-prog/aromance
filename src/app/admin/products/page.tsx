@@ -18,7 +18,7 @@ import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 // Extend product type to include the key and other fields from Realtime Database
-type ProductWithKey = Product & { key: string; description: string; category: string; };
+type ProductWithKey = Product & { key: string; description: string };
 
 export default function AdminProductsPage() {
   const { database } = useFirebase();
@@ -156,7 +156,7 @@ export default function AdminProductsPage() {
                   <TableRow key={product.key}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.brand}</TableCell>
-                    <TableCell>{product.category}</TableCell>
+                    <TableCell>{Array.isArray(product.category) ? product.category.join(', ') : ''}</TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
                     <TableCell>{product.discount || 0}%</TableCell>
                     <TableCell className="text-right">
