@@ -14,16 +14,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Product } from '@/lib/types';
 import { categories } from '@/lib/data';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 // The product type passed in might include a key if it's being edited
-type EditableProduct = (Product & { key?: string, description?: string }) | null;
+type EditableProduct = (Product & { key?: string; description?: string }) | null;
 
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product & { description: string }, 'id' | 'imageId'>) => void;
+  onSave: (product: Omit<Product & { description: string }, 'id'>) => void;
   product: EditableProduct;
 }
 
@@ -34,7 +36,9 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
   const [price, setPrice] = useState('');
   const [discount, setDiscount] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageId, setImageId] = useState('');
+
+  const productPlaceholders = PlaceHolderImages.filter(img => img.id.startsWith('product-'));
 
   useEffect(() => {
     if (product) {
@@ -44,7 +48,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice(String(product.price));
       setDiscount(String(product.discount || 0));
       setSelectedCategories(Array.isArray(product.category) ? product.category : []);
-      setImageFile(null);
+      setImageId(product.imageId);
     } else {
       // Reset form when adding new
       setName('');
@@ -53,7 +57,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice('');
       setDiscount('0');
       setSelectedCategories([]);
-      setImageFile(null);
+      setImageId(productPlaceholders[0]?.id || '');
     }
   }, [product, open]);
 
@@ -65,13 +69,11 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
 
   const handleSubmit = () => {
     // Basic validation
-    if (!name || !brand || !price || selectedCategories.length === 0) {
-      alert('Please fill out all required fields, including at least one category.');
+    if (!name || !brand || !price || selectedCategories.length === 0 || !imageId) {
+      alert('Please fill out all required fields, including at least one category and an image.');
       return;
     }
     
-    // In a real app, you would handle image upload here.
-    // For now, we'll just pass the data.
     onSave({
       name,
       brand,
@@ -79,6 +81,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       price: parseFloat(price),
       discount: parseFloat(discount) || 0,
       category: selectedCategories,
+      imageId: imageId,
     });
   };
 
@@ -100,13 +103,13 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="brand" className="text-right">
-              Brand (Short Desc.)
+              Brand
             </Label>
             <Input id="brand" value={brand} onChange={(e) => setBrand(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
             <Label htmlFor="description" className="text-right pt-2">
-              Description (Long)
+              Description
             </Label>
             <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" rows={4} />
           </div>
@@ -143,7 +146,18 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
             <Label htmlFor="image" className="text-right">
               Image
             </Label>
-            <Input id="image" type="file" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="col-span-3" />
+             <Select value={imageId} onValueChange={setImageId}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select an image" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productPlaceholders.map((img) => (
+                    <SelectItem key={img.id} value={img.id}>
+                      {img.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>

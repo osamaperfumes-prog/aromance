@@ -91,7 +91,7 @@ export default function AdminProductsPage() {
       }
   };
 
-  const handleSave = async (productData: Omit<ProductWithKey, 'key' | 'id' | 'imageId'>) => {
+  const handleSave = async (productData: Omit<ProductWithKey, 'key' | 'id'>) => {
     if (!database) return;
 
     try {
@@ -107,11 +107,7 @@ export default function AdminProductsPage() {
         // Add new product
         const productsRef = ref(database, 'products');
         const newProductRef = push(productsRef);
-        await set(newProductRef, {
-            ...productData,
-            // Assign a random placeholder image ID for new products
-            imageId: `product-${Math.floor(Math.random() * 8) + 1}`
-        });
+        await set(newProductRef, productData);
         toast({
             title: 'Product Added',
             description: 'The new product has been successfully added.',
