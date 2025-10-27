@@ -1,20 +1,16 @@
 {
   "rules": {
-    // Authenticated admins have full read/write access to the entire database.
-    ".read": "auth != null",
-    ".write": "auth != null",
     "orders": {
-      // The general read rule is overridden here to be more specific.
-      // Admins can still read the full list.
-      ".read": "auth != null",
-      // Allow anyone to create a new order.
-      // This rule is a combination of the previous .write and a new validation.
-      ".write": "!data.exists() && newData.exists()",
-      "$orderId": {
-        // Admins can read/write individual orders.
-        ".read": "auth != null",
-        ".write": "auth != null"
-      }
-    }
+      // Allow anyone to create a new order record.
+      // The '.write' rule here allows a user to write to a location if there's no data there already.
+      // We validate that the incoming data must have a `buyerName` and `totalAmount` to be valid.
+      ".write": "!data.exists() && newData.exists() && newData.hasChildren(['buyerName', 'totalAmount', 'orderDate', 'status', 'deliveryMethod', 'items'])",
+      // No one can read the entire list of orders unless they are an admin (covered by root rule).
+      ".read": false
+    },
+    // Authenticated admins have full read/write access to the entire database.
+    // This rule is placed at the root but checked after the more specific 'orders' rule.
+    ".read": "auth != null",
+    ".write": "auth != null"
   }
 }
