@@ -6,6 +6,7 @@ import { useFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
+import Link from 'next/link';
 
 export default function AdminPage() {
   const { user, isUserLoading, auth } = useFirebase();
@@ -71,7 +72,9 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <p>Add, edit, and remove products.</p>
-            <Button className="mt-4">Manage Products</Button>
+            <Button asChild className="mt-4">
+                <Link href="/admin/products">Manage Products</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
