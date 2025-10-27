@@ -17,8 +17,8 @@ import type { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-// Extend product type to include the key from Realtime Database
-type ProductWithKey = Product & { key: string; description: string; };
+// Extend product type to include the key and other fields from Realtime Database
+type ProductWithKey = Product & { key: string; description: string; category: string; };
 
 export default function AdminProductsPage() {
   const { database } = useFirebase();
@@ -39,7 +39,7 @@ export default function AdminProductsPage() {
         if (data) {
           const productsList: ProductWithKey[] = Object.entries(data).map(([key, value]) => ({
             key,
-            ...(value as Product & { description: string }),
+            ...(value as Omit<ProductWithKey, 'key'>),
           }));
           setProducts(productsList);
         } else {
@@ -91,7 +91,7 @@ export default function AdminProductsPage() {
       }
   };
 
-  const handleSave = async (productData: Omit<ProductWithKey, 'key'>) => {
+  const handleSave = async (productData: Omit<ProductWithKey, 'key' | 'id' | 'imageId'>) => {
     if (!database) return;
 
     try {
@@ -140,6 +140,7 @@ export default function AdminProductsPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Brand</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -150,6 +151,7 @@ export default function AdminProductsPage() {
                   <TableRow key={product.key}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.brand}</TableCell>
+                    <TableCell>{product.category}</TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(product)} className="mr-2">
@@ -163,7 +165,7 @@ export default function AdminProductsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     No products found.
                   </TableCell>
                 </TableRow>
@@ -176,7 +178,7 @@ export default function AdminProductsPage() {
       <ProductDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSave={handleSave}
+        onSave={handleSave as any}
         product={editingProduct}
       />
     </div>
