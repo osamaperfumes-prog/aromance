@@ -191,10 +191,6 @@ export default function CartPage() {
                       <span>Subtotal</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Shipping</span>
-                      <span>{deliveryMethod === 'delivery' ? 'Calculated at next step' : 'Pickup'}</span>
-                    </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
