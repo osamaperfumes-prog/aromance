@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Product } from '@/lib/types';
 import { categories } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 // The product type passed in might include a key if it's being edited
 type EditableProduct = (Product & { key?: string; description?: string }) | null;
@@ -25,7 +23,7 @@ type EditableProduct = (Product & { key?: string; description?: string }) | null
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product & { description: string }, 'id'>) => void;
+  onSave: (product: Omit<Product & { description: string }, 'id' | 'imageId'>, imageFile?: File) => void;
   product: EditableProduct;
 }
 
@@ -36,9 +34,9 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
   const [price, setPrice] = useState('');
   const [discount, setDiscount] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [imageId, setImageId] = useState('');
+  const [imageFile, setImageFile] = useState<File | undefined>();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const productPlaceholders = PlaceHolderImages.filter(img => img.id.startsWith('product-'));
 
   useEffect(() => {
     if (product) {
@@ -48,7 +46,10 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice(String(product.price));
       setDiscount(String(product.discount || 0));
       setSelectedCategories(Array.isArray(product.category) ? product.category : []);
-      setImageId(product.imageId);
+      // If product has an existing image, we can display it.
+      // For simplicity, we'll just reset the file input.
+      setImageFile(undefined);
+      setImagePreview(null);
     } else {
       // Reset form when adding new
       setName('');
@@ -57,7 +58,8 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice('');
       setDiscount('0');
       setSelectedCategories([]);
-      setImageId(productPlaceholders[0]?.id || '');
+      setImageFile(undefined);
+      setImagePreview(null);
     }
   }, [product, open]);
 
@@ -66,12 +68,28 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       checked ? [...prev, categoryTitle] : prev.filter(c => c !== categoryTitle)
     );
   };
+  
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        }
+        reader.readAsDataURL(file);
+    }
+  }
 
   const handleSubmit = () => {
     // Basic validation
-    if (!name || !brand || !price || selectedCategories.length === 0 || !imageId) {
-      alert('Please fill out all required fields, including at least one category and an image.');
+    if (!name || !brand || !price || selectedCategories.length === 0) {
+      alert('Please fill out all required fields, including at least one category.');
       return;
+    }
+    if (!product && !imageFile) {
+        alert('An image is required when adding a new product.');
+        return;
     }
     
     onSave({
@@ -81,8 +99,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       price: parseFloat(price),
       discount: parseFloat(discount) || 0,
       category: selectedCategories,
-      imageId: imageId,
-    });
+    }, imageFile);
   };
 
   return (
@@ -142,22 +159,18 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="image" className="text-right">
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label htmlFor="image" className="text-right pt-2">
               Image
             </Label>
-             <Select value={imageId} onValueChange={setImageId}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select an image" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productPlaceholders.map((img) => (
-                    <SelectItem key={img.id} value={img.id}>
-                      {img.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-            </Select>
+             <div className="col-span-3">
+                <Input id="image" type="file" accept="image/*" onChange={handleImageChange} />
+                {imagePreview && (
+                    <div className="mt-4">
+                        <img src={imagePreview} alt="Image preview" className="rounded-md max-h-48" />
+                    </div>
+                )}
+             </div>
           </div>
         </div>
         <DialogFooter>

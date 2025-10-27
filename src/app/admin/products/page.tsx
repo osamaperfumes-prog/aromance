@@ -91,14 +91,23 @@ export default function AdminProductsPage() {
       }
   };
 
-  const handleSave = async (productData: Omit<ProductWithKey, 'key' | 'id'>) => {
+  const handleSave = async (productData: Omit<Product & { description: string }, 'id' | 'imageId'>, imageFile?: File) => {
     if (!database) return;
+    
+    // NOTE: This is where secure image upload logic would go.
+    // For now, we will just save the product data without a real image URL.
+    // I will add a placeholder imageId. In a real app, you would get the URL
+    // back from your image hosting service (like ImageKit).
+    const finalProductData = {
+      ...productData,
+      imageId: productData.imageId || 'product-1', // Placeholder
+    };
 
     try {
       if (editingProduct) {
         // Update existing product
         const productRef = ref(database, `products/${editingProduct.key}`);
-        await update(productRef, productData);
+        await update(productRef, finalProductData);
         toast({
             title: 'Product Updated',
             description: 'The product has been successfully updated.',
@@ -107,7 +116,7 @@ export default function AdminProductsPage() {
         // Add new product
         const productsRef = ref(database, 'products');
         const newProductRef = push(productsRef);
-        await set(newProductRef, productData);
+        await set(newProductRef, finalProductData);
         toast({
             title: 'Product Added',
             description: 'The new product has been successfully added.',
@@ -180,7 +189,7 @@ export default function AdminProductsPage() {
       <ProductDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSave={handleSave as any}
+        onSave={handleSave}
         product={editingProduct}
       />
     </div>
