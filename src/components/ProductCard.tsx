@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext';
+import { Badge } from './ui/badge';
 
 interface ProductCardProps {
   product: Product;
@@ -50,10 +51,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </Link>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <CardDescription>{product.brand}</CardDescription>
+        <div className="flex justify-between items-start">
+            <CardDescription>{product.brand}</CardDescription>
+            {product.category && <Badge variant="outline">{product.category}</Badge>}
+        </div>
         <CardTitle className="mt-1 text-base font-semibold leading-tight">
           <Link href={`/products/${product.id}`}>{product.name}</Link>
         </CardTitle>
+        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+          {product.description}
+        </p>
         <div className="mt-2 flex items-baseline gap-2">
           <p className="text-lg font-bold text-primary">{formatPrice(product.price * (1 - product.discount / 100))}</p>
           {product.discount > 0 && (
