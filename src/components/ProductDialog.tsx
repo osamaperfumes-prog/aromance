@@ -32,6 +32,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
   const [brand, setBrand] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [discount, setDiscount] = useState('');
   const [category, setCategory] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -41,6 +42,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setBrand(product.brand);
       setDescription(product.description || '');
       setPrice(String(product.price));
+      setDiscount(String(product.discount || 0));
       setCategory(product.category || '');
       setImageFile(null);
     } else {
@@ -49,6 +51,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setBrand('');
       setDescription('');
       setPrice('');
+      setDiscount('0');
       setCategory('');
       setImageFile(null);
     }
@@ -68,8 +71,8 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       brand,
       description: description,
       price: parseFloat(price),
+      discount: parseFloat(discount) || 0,
       category: category,
-      discount: 0, // default discount to 0
     });
   };
 
@@ -106,6 +109,12 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
               Price
             </Label>
             <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="discount" className="text-right">
+              Discount (%)
+            </Label>
+            <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="category" className="text-right">

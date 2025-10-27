@@ -107,7 +107,11 @@ export default function AdminProductsPage() {
         // Add new product
         const productsRef = ref(database, 'products');
         const newProductRef = push(productsRef);
-        await set(newProductRef, productData);
+        await set(newProductRef, {
+            ...productData,
+            // Assign a random placeholder image ID for new products
+            imageId: `product-${Math.floor(Math.random() * 8) + 1}`
+        });
         toast({
             title: 'Product Added',
             description: 'The new product has been successfully added.',
@@ -142,6 +146,7 @@ export default function AdminProductsPage() {
                 <TableHead>Brand</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
+                <TableHead>Discount</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -153,6 +158,7 @@ export default function AdminProductsPage() {
                     <TableCell>{product.brand}</TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
+                    <TableCell>{product.discount || 0}%</TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(product)} className="mr-2">
                         Edit
@@ -165,7 +171,7 @@ export default function AdminProductsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
+                  <TableCell colSpan={6} className="text-center h-24">
                     No products found.
                   </TableCell>
                 </TableRow>
