@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -5,12 +7,51 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { ProductCard } from '@/components/ProductCard';
-import { aromanceFactor, categories, newArrivals, rewards, testimonials, trustBadges, wholesale } from '@/lib/data';
+import { categories, testimonials, trustBadges } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useFirebase } from '@/firebase';
+import { ref, onValue, limitToLast } from 'firebase/database';
+import type { Product } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
+type ProductWithKey = Product & { key: string };
 
 export default function Home() {
   const testimonialImages = PlaceHolderImages.filter(img => img.id.startsWith('testimonial'));
+  const { database } = useFirebase();
+  const [newArrivals, setNewArrivals] = useState<ProductWithKey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!database) return;
+
+    const productsRef = ref(database, 'products');
+    // Get the last 8 products added
+    const recentProductsQuery = limitToLast(8);
+
+    const unsubscribe = onValue(ref(database, 'products'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const productsList: ProductWithKey[] = Object.entries(data).map(([key, value]) => ({
+            key,
+            id: key, // Use the database key as the product ID
+            ...((value as Omit<Product, 'id'>)),
+          }));
+          // Take the last 8 items and reverse to show newest first
+          setNewArrivals(productsList.slice(-8).reverse());
+        } else {
+          setNewArrivals([]);
+        }
+        setIsLoading(false);
+      }, {
+        onlyOnce: false
+      });
+
+    return () => unsubscribe();
+  }, [database]);
+
 
   return (
     <div className="flex flex-col">
@@ -31,7 +72,10 @@ export default function Home() {
       {/* Hero / Shop By Type */}
       <section className="w-full py-12 md:py-20 bg-card">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-8">Shop By Type</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-2">Shop By Type</h2>
+          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Find the perfect fragrance for any occasion. Whether you need a small bottle for your next trip or a luxurious gift set, we have you covered.
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category) => {
               const image = PlaceHolderImages.find(img => img.id === category.imageId);
@@ -48,8 +92,9 @@ export default function Home() {
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       )}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4">
                         <h3 className="text-2xl font-semibold text-white">{category.title}</h3>
+                        <p className="text-sm text-white/90 mt-2">{category.description}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -70,9 +115,23 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {isLoading ? (
+               Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex flex-col space-y-3">
+                  <Skeleton className="h-[250px] w-full rounded-lg" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-4 w-[150px]" />
+                  </div>
+                </div>
+              ))
+            ) : newArrivals.length > 0 ? (
+                newArrivals.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+            ) : (
+              <p className="text-center col-span-full">No products have been added yet.</p>
+            )}
           </div>
         </div>
       </section>

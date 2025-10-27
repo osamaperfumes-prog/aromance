@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { newArrivals } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,23 +9,73 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingCart, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useFirebase } from '@/firebase';
+import { ref, onValue } from 'firebase/database';
+import type { Product } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { id } = params;
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { database } = useFirebase();
 
-  // In a real app, you'd fetch this from a database.
-  // We're also searching in the duplicated list from products/page.tsx for demo purposes
-  const allProducts = [...newArrivals, ...newArrivals.slice(0, 4)].map((product, index) => ({
-    ...product,
-    id: index < newArrivals.length ? product.id : `${product.id}-${index}`,
-  }));
-  
-  const product = allProducts.find((p) => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!database || !id) return;
+
+    // The ID from the URL is the database key
+    const productRef = ref(database, `products/${id}`);
+    const unsubscribe = onValue(productRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setProduct({ id: id as string, ...data });
+      } else {
+        setProduct(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [database, id]);
+
   const image = product ? PlaceHolderImages.find(img => img.id === product.imageId) : undefined;
   
+  const handleAddToCart = () => {
+    if (!product) return;
+    addToCart(product);
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
+  if (isLoading) {
+      return (
+          <div className="container mx-auto py-8 md:py-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
+                  <Skeleton className="aspect-square w-full rounded-lg" />
+                  <div className="flex flex-col gap-4">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-10 w-3/4" />
+                      <Skeleton className="h-8 w-48 mt-2" />
+                      <div className="mt-4 space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                      </div>
+                      <Skeleton className="h-12 w-40 mt-6" />
+                  </div>
+              </div>
+          </div>
+      )
+  }
+
   if (!product) {
     return (
       <div className="container mx-auto py-12 text-center">
@@ -40,16 +89,8 @@ export default function ProductDetailPage() {
       </div>
     );
   }
-  
-  const handleAddToCart = () => {
-    addToCart(product);
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your cart.`,
-    });
-  };
 
-  const finalPrice = product.price * (1 - product.discount / 100);
+  const finalPrice = product.price * (1 - (product.discount || 0) / 100);
 
   return (
     <div className="container mx-auto py-8 md:py-16">
@@ -88,14 +129,15 @@ export default function ProductDetailPage() {
             )}
           </div>
           
+           <div className="mt-4 flex flex-wrap gap-2">
+            {Array.isArray(product.category) && product.category.map(cat => (
+              <Badge key={cat} variant="secondary">{cat}</Badge>
+            ))}
+          </div>
+
           <div className="mt-4 text-base text-foreground/80 space-y-4">
             <p>
-              This is a longer description for {product.name}. It captures the essence of the fragrance,
-              highlighting its main notes, character, and the experience it evokes. This detailed text provides
-              customers with a richer understanding of the scent profile, helping them make a more informed purchase decision.
-            </p>
-             <p>
-              It could describe the top, middle, and base notes, the occasion it's best suited for, and the type of person who might wear it.
+              {product.description}
             </p>
           </div>
 
