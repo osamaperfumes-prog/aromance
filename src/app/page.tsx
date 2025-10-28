@@ -12,7 +12,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, limit, onSnapshot, orderBy } from 'firebase/firestore';
+import { getDatabase, ref, onValue, query, orderByChild, limitToLast } from 'firebase/database';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -20,15 +20,15 @@ type ProductWithId = Product & { id: string };
 
 export default function Home() {
   const testimonialImages = PlaceHolderImages.filter(img => img.id.startsWith('testimonial'));
-  const { firestore } = useFirebase();
+  const { database } = useFirebase();
   const [newArrivals, setNewArrivals] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const recentProductsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    const productsRef = collection(firestore, 'products');
-    return query(productsRef, orderBy('createdAt', 'desc'), limit(4));
-  }, [firestore]);
+    if (!database) return null;
+    const productsRef = ref(database, 'products');
+    return query(productsRef, orderByChild('createdAt'), limitToLast(4));
+  }, [database]);
 
   useEffect(() => {
     if (!recentProductsQuery) {
@@ -36,12 +36,17 @@ export default function Home() {
         return;
     };
 
-    const unsubscribe = onSnapshot(recentProductsQuery, (snapshot) => {
-        const data: ProductWithId[] = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...(doc.data() as Omit<Product, 'id'>)
-        }));
-        setNewArrivals(data);
+    const unsubscribe = onValue(recentProductsQuery, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const productsList: ProductWithId[] = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
+            setNewArrivals(productsList.reverse()); // Reverse to show newest first
+        } else {
+            setNewArrivals([]);
+        }
         setIsLoading(false);
     }, (error) => {
         console.error("Error fetching new arrivals:", error);

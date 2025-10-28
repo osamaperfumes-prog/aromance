@@ -14,12 +14,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { FirestorePermissionError, errorEmitter } from '@/firebase';
+import { ref, push, serverTimestamp } from "firebase/database";
+
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
-  const { firestore } = useFirebase();
+  const { database } = useFirebase();
   const { toast } = useToast();
 
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -38,7 +38,7 @@ export default function CartPage() {
   }, 0);
   
   const handleCheckout = async () => {
-    if (!firestore) return;
+    if (!database) return;
     
     if (deliveryMethod === 'delivery') {
         if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
@@ -78,29 +78,19 @@ export default function CartPage() {
     };
 
     try {
-        const ordersCollection = collection(firestore, 'orders');
-        addDoc(ordersCollection, orderData)
-          .then(() => {
-            toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
-            
-            clearCart();
-            setBuyerName('');
-            setPhoneNumber('');
-            setCity('');
-            setNeighborhood('');
-            setStreet('');
-            setBuildingNumber('');
-            setLandmark('');
-          })
-          .catch((serverError) => {
-            const permissionError = new FirestorePermissionError({
-              path: ordersCollection.path,
-              operation: 'create',
-              requestResourceData: orderData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            toast({ variant: 'destructive', title: 'Order Failed', description: 'There was a problem placing your order. Please try again.' });
-          });
+        const ordersRef = ref(database, 'orders');
+        await push(ordersRef, orderData);
+
+        toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
+        
+        clearCart();
+        setBuyerName('');
+        setPhoneNumber('');
+        setCity('');
+        setNeighborhood('');
+        setStreet('');
+        setBuildingNumber('');
+        setLandmark('');
 
     } catch (error: any) {
         console.error("Error placing order:", error);

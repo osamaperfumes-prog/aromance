@@ -10,45 +10,40 @@ import { ShoppingCart, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { ref, onValue } from 'firebase/database';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { id } = params;
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const { firestore } = useFirebase();
+  const { database } = useFirebase();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const docRef = useMemoFirebase(() => {
-    if (!firestore || typeof id !== 'string') return null;
-    return doc(firestore, `products/${id}`);
-  }, [firestore, id]);
+    if (!database || typeof id !== 'string') return null;
+    return ref(database, `products/${id}`);
+  }, [database, id]);
 
 
   useEffect(() => {
     if (!docRef) return;
     
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      const data = snapshot.data();
+    const unsubscribe = onValue(docRef, (snapshot) => {
+      const data = snapshot.val();
       if (data) {
-        setProduct({ id: snapshot.id as string, ...data } as Product);
+        setProduct({ id: snapshot.key as string, ...data } as Product);
       } else {
         setProduct(null);
       }
       setIsLoading(false);
     }, (err) => {
-        const permissionError = new FirestorePermissionError({
-            path: docRef.path,
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        console.error("Error fetching product:", err);
         setIsLoading(false);
     });
 

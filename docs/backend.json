@@ -153,24 +153,5 @@
       "password"
     ]
   },
-  "firestore": {
-    "/products/{productId}": {
-      "schema": {
-        "$ref": "#/entities/Product"
-      },
-      "description": "Stores individual product details."
-    },
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/User"
-      },
-      "description": "Stores user profile information."
-    },
-    "/orders/{orderId}": {
-        "schema": {
-            "$ref": "#/entities/Order"
-        },
-        "description": "Stores customer order information."
-    }
-  }
+  "firestore": {}
 }

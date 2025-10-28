@@ -3,22 +3,22 @@
 import { useState, useEffect } from 'react';
 import { ProductCard } from '@/components/ProductCard';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { getDatabase, ref, onValue, query, orderByChild } from 'firebase/database';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type ProductWithId = Product & { id: string };
 
 export default function ProductsPage() {
-  const { firestore } = useFirebase();
+  const { database } = useFirebase();
   const [products, setProducts] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    const productsRef = collection(firestore, 'products');
-    return query(productsRef, orderBy('createdAt', 'desc'));
-  }, [firestore]);
+    if (!database) return null;
+    const productsRef = ref(database, 'products');
+    return query(productsRef, orderByChild('createdAt'));
+  }, [database]);
 
 
   useEffect(() => {
@@ -26,12 +26,17 @@ export default function ProductsPage() {
         setIsLoading(false);
         return;
     }
-    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
-      const data: ProductWithId[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Product, 'id'>)
-      }));
-      setProducts(data);
+    const unsubscribe = onValue(productsQuery, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const productsList: ProductWithId[] = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+        }));
+        setProducts(productsList.reverse()); // To show newest first
+      } else {
+        setProducts([]);
+      }
       setIsLoading(false);
     }, (error) => {
         console.error("Error fetching products:", error);

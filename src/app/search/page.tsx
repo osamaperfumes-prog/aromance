@@ -4,17 +4,17 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProductCard } from '@/components/ProductCard';
 import { useFirebase } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { getDatabase, ref, get } from 'firebase/database';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { searchProducts } from './actions'; // Updated import
+import { searchProducts } from './actions'; 
 
 type ProductWithKey = Product & { key: string };
 
 function SearchPageComponent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  const { firestore } = useFirebase();
+  const { database } = useFirebase();
 
   const [allProducts, setAllProducts] = useState<ProductWithKey[]>([]);
   const [keywordResults, setKeywordResults] = useState<ProductWithKey[]>([]);
@@ -23,18 +23,23 @@ function SearchPageComponent() {
   const [isAiLoading, setIsAiLoading] = useState(true);
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!database) return;
 
     const fetchProducts = async () => {
       try {
-        const productsRef = collection(firestore, 'products');
-        const snapshot = await getDocs(productsRef);
-        const productsList: ProductWithKey[] = snapshot.docs.map(doc => ({
-          key: doc.id,
-          id: doc.id,
-          ...(doc.data() as Omit<Product, 'id'>),
-        }));
-        setAllProducts(productsList);
+        const productsRef = ref(database, 'products');
+        const snapshot = await get(productsRef);
+        const data = snapshot.val();
+        if (data) {
+          const productsList: ProductWithKey[] = Object.keys(data).map(key => ({
+            key: key,
+            id: key,
+            ...data[key],
+          }));
+          setAllProducts(productsList);
+        } else {
+            setAllProducts([]);
+        }
       } catch (error) {
         console.error("Error fetching products: ", error);
         setAllProducts([]);
@@ -44,7 +49,7 @@ function SearchPageComponent() {
     };
 
     fetchProducts();
-  }, [firestore]);
+  }, [database]);
 
   useEffect(() => {
     if (isLoading || !query) {
