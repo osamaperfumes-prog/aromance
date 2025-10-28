@@ -47,6 +47,8 @@ export default function ContactPage() {
     }
 
     setIsSubmittingInquiry(true);
+    // Here you would typically send the data to a backend or an email service.
+    // For this example, we'll just simulate a delay and show a success message.
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     setIsSubmittingInquiry(false);
@@ -174,7 +176,7 @@ export default function ContactPage() {
               <Label htmlFor="orderId">Order Number (Optional)</Label>
               <Input
                 id="orderId"
-                placeholder="e.g., 12345"
+                placeholder="e.g., 1001"
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
               />

@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { ref, push, serverTimestamp } from "firebase/database";
+import { ref, set, serverTimestamp, transaction } from "firebase/database";
 
 
 export default function CartPage() {
@@ -38,7 +38,10 @@ export default function CartPage() {
   }, 0);
   
   const handleCheckout = async () => {
-    if (!database) return;
+    if (!database) {
+        toast({ variant: 'destructive', title: 'Database Error', description: 'Cannot connect to the database.' });
+        return;
+    }
     
     if (deliveryMethod === 'delivery') {
         if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
@@ -54,34 +57,48 @@ export default function CartPage() {
     
     setIsSubmitting(true);
 
-    let shippingAddress = 'Pickup';
-    if (deliveryMethod === 'delivery') {
-        shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
-    }
-
-    const orderData = {
-        orderDate: serverTimestamp(),
-        totalAmount: subtotal,
-        status: 'processing',
-        shippingAddress: shippingAddress,
-        buyerName: buyerName,
-        phoneNumber: phoneNumber,
-        deliveryMethod: deliveryMethod,
-        items: cartItems.map(item => ({
-            productId: item.id,
-            name: item.name,
-            brand: item.brand,
-            quantity: item.quantity,
-            itemPrice: item.price * (1 - (item.discount || 0) / 100),
-            imageUrl: item.imageUrl,
-        }))
-    };
+    const counterRef = ref(database, 'orderCounter');
 
     try {
-        const ordersRef = ref(database, 'orders');
-        await push(ordersRef, orderData);
+        const { committed, snapshot } = await transaction(counterRef, (currentValue) => {
+            // If the counter doesn't exist, initialize it to 1000. Otherwise, increment it.
+            return (currentValue || 999) + 1;
+        });
 
-        toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
+        if (!committed) {
+            throw new Error("Failed to generate a new order number. Please try again.");
+        }
+        
+        const newOrderId = snapshot.val();
+
+        let shippingAddress = 'Pickup';
+        if (deliveryMethod === 'delivery') {
+            shippingAddress = `${street}, ${buildingNumber}, ${neighborhood}, ${city}. Landmark: ${landmark || 'N/A'}`;
+        }
+
+        const orderData = {
+            orderId: newOrderId,
+            orderDate: serverTimestamp(),
+            totalAmount: subtotal,
+            status: 'processing',
+            shippingAddress: shippingAddress,
+            buyerName: buyerName,
+            phoneNumber: phoneNumber,
+            deliveryMethod: deliveryMethod,
+            items: cartItems.map(item => ({
+                productId: item.id,
+                name: item.name,
+                brand: item.brand,
+                quantity: item.quantity,
+                itemPrice: item.price * (1 - (item.discount || 0) / 100),
+                imageUrl: item.imageUrl,
+            }))
+        };
+
+        const newOrderRef = ref(database, `orders/${newOrderId}`);
+        await set(newOrderRef, orderData);
+
+        toast({ title: 'Order Placed!', description: `Your order number is ${newOrderId}. You will be contacted soon.` });
         
         clearCart();
         setBuyerName('');
@@ -94,7 +111,7 @@ export default function CartPage() {
 
     } catch (error: any) {
         console.error("Error placing order:", error);
-        toast({ variant: 'destructive', title: 'Order Failed', description: 'There was a problem placing your order. Please try again.' });
+        toast({ variant: 'destructive', title: 'Order Failed', description: error.message || 'There was a problem placing your order. Please try again.' });
     } finally {
         setIsSubmitting(false);
     }
