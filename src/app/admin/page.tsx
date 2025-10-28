@@ -63,7 +63,9 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <p>View and manage customer orders.</p>
-            <Button className="mt-4">View Orders</Button>
+            <Button asChild className="mt-4">
+              <Link href="/admin/orders">View Orders</Link>
+            </Button>
           </CardContent>
         </Card>
         <Card>
