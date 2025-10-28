@@ -59,7 +59,7 @@ export const footerLinks: FooterLink[] = [
   {
     title: 'Customer Service',
     links: [
-      { name: 'Contact Us', href: '#' },
+      { name: 'Contact Us', href: '/contact' },
     ],
   },
   {
