@@ -8,42 +8,54 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingCart, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
-import { ref, onValue } from 'firebase/database';
+import { doc, onSnapshot } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { id } = params;
   const { addToCart } = useCart();
   const { toast } = useToast();
-  const { database } = useFirebase();
+  const { firestore } = useFirebase();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!database || !id) return;
+  const docRef = useMemo(() => {
+    if (!firestore || !id) return null;
+    return doc(firestore, `products/${id}`);
+  }, [firestore, id]);
 
-    // The ID from the URL is the database key
-    const productRef = ref(database, `products/${id}`);
-    const unsubscribe = onValue(productRef, (snapshot) => {
-      const data = snapshot.val();
+
+  useEffect(() => {
+    if (!docRef) return;
+    
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      const data = snapshot.data();
       if (data) {
-        setProduct({ id: id as string, ...data });
+        setProduct({ id: snapshot.id as string, ...data } as Product);
       } else {
         setProduct(null);
       }
       setIsLoading(false);
+    }, (err) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [database, id]);
+  }, [docRef]);
 
-  const imageUrl = product ? `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}` : '';
+  const imageUrl = (product && product.imageId) ? `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}` : '/placeholder.svg';
   
   const handleAddToCart = () => {
     if (!product) return;

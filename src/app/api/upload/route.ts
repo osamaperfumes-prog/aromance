@@ -6,10 +6,7 @@ import ImageKit from 'imagekit';
 // Initialize ImageKit securely on the server
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
-  // --- TEMPORARY DIAGNOSTIC STEP ---
-  // The private key is hardcoded here to test if the key value itself is the problem.
-  // This is NOT a secure practice and should be reverted after testing.
-  privateKey: "/NNxyjKnDB58I3OWclSeIRFpqQU=",
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
   urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
 });
 

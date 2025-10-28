@@ -25,7 +25,7 @@ type EditableProduct = (Product & { key?: string; }) | null;
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => void;
+  onSave: (product: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => Promise<void>;
   product: EditableProduct;
 }
 
@@ -86,7 +86,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Basic validation
     if (!name || !brand || !price || selectedCategories.length === 0) {
       alert('Please fill out all required fields, including at least one category.');
@@ -97,7 +97,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
         return;
     }
     
-    onSave({
+    await onSave({
       name,
       brand,
       description: description,

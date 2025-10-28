@@ -1,8 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
-import { ref, onValue, push, set, remove, update } from 'firebase/database';
+import {
+  collection,
+  query,
+  onSnapshot,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -16,156 +25,193 @@ import { ProductDialog } from '@/components/ProductDialog';
 import type { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
-// Extend product type to include the key
-type ProductWithKey = Product & { key: string };
+type ProductWithId = Product & { id: string };
 
 export default function AdminProductsPage() {
-  const { database } = useFirebase();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
-  const [products, setProducts] = useState<ProductWithKey[]>([]);
+  const [products, setProducts] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<ProductWithKey | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductWithId | null>(
+    null
+  );
+
+  const productsCollection = useMemo(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'products');
+  }, [firestore]);
 
   useEffect(() => {
-    if (!database) return;
+    if (!productsCollection) return;
 
-    const productsRef = ref(database, 'products');
-    const unsubscribe = onValue(
-      productsRef,
+    const q = query(productsCollection);
+    const unsubscribe = onSnapshot(
+      q,
       (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const productsList: ProductWithKey[] = Object.entries(data).map(([key, value]) => ({
-            key,
-            id: key,
-            ...((value as Omit<Product, 'id'>)),
-          }));
-          setProducts(productsList.reverse());
-        } else {
-          setProducts([]);
-        }
+        const productsList: ProductWithId[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Product, 'id'>),
+        }));
+        setProducts(productsList.reverse());
         setIsLoading(false);
       },
-      (error) => {
-        console.error('Error fetching products:', error);
+      async (err) => {
+        console.error('Error fetching products:', err);
+        const permissionError = new FirestorePermissionError({
+            path: productsCollection.path,
+            operation: 'list',
+          });
+        errorEmitter.emit('permission-error', permissionError);
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to fetch products from the database.',
+          description: 'Failed to fetch products.',
         });
         setIsLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [database, toast]);
+  }, [productsCollection, toast]);
 
   const handleAddNew = () => {
     setEditingProduct(null);
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (product: ProductWithKey) => {
+  const handleEdit = (product: ProductWithId) => {
     setEditingProduct(product);
     setIsDialogOpen(true);
   };
-  
-  const handleDelete = async (productKey: string) => {
-      if (!database || !confirm('Are you sure you want to delete this product?')) return;
-      
-      try {
-          const productRef = ref(database, `products/${productKey}`);
-          await remove(productRef);
-          toast({
-              title: 'Product Deleted',
-              description: 'The product has been successfully removed.',
-          });
-      } catch (error) {
-          console.error("Error deleting product:", error);
-          toast({
-              variant: 'destructive',
-              title: 'Delete Failed',
-              description: 'Could not delete the product. Please try again.',
-          });
-      }
+
+  const handleDelete = async (productId: string) => {
+    if (!firestore || !confirm('Are you sure you want to delete this product?'))
+      return;
+
+    const docRef = doc(firestore, `products/${productId}`);
+    deleteDoc(docRef).catch(async (serverError) => {
+      const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'delete',
+        });
+      errorEmitter.emit('permission-error', permissionError);
+      toast({
+        variant: 'destructive',
+        title: 'Delete Failed',
+        description: 'Could not delete the product. Please try again.',
+      });
+    });
+    toast({
+      title: 'Product Deleted',
+      description: 'The product has been successfully removed.',
+    });
   };
 
-  const handleSave = async (productData: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => {
-    if (!database) return;
-    
+  const handleSave = async (
+    productData: Omit<Product, 'id' | 'imageId'>,
+    imageFile?: File
+  ) => {
+    if (!firestore || !productsCollection) return;
+
     let imageId = editingProduct?.imageId || '';
 
     try {
-        // Step 1: Handle image upload if a new file is provided
-        if (imageFile) {
-            // Step 1a: Get authentication parameters from our secure API endpoint
-            const authResponse = await fetch('/api/upload');
-            if (!authResponse.ok) {
-                throw new Error('Failed to get upload authentication from server.');
-            }
-            const authParams = await authResponse.json();
+      if (imageFile) {
+        const authResponse = await fetch('/api/upload');
+        if (!authResponse.ok) {
+          throw new Error('Failed to get upload authentication from server.');
+        }
+        const authParams = await authResponse.json();
 
-            // Step 1b: Prepare FormData for ImageKit
-            const formData = new FormData();
-            formData.append('file', imageFile);
-            formData.append('fileName', imageFile.name);
-            formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!); // Use public key from env
-            formData.append('signature', authParams.signature);
-            formData.append('expire', authParams.expire);
-            formData.append('token', authParams.token);
+        const formData = new FormData();
+        formData.append('file', imageFile);
+        formData.append('fileName', imageFile.name);
+        formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
+        formData.append('signature', authParams.signature);
+        formData.append('expire', authParams.expire);
+        formData.append('token', authParams.token);
 
-            // Step 1c: Upload the image to ImageKit
-            const uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
-                method: 'POST',
-                body: formData,
-            });
+        const uploadResponse = await fetch(
+          'https://upload.imagekit.io/api/v1/files/upload',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
 
-            if (!uploadResponse.ok) {
-                const errorData = await uploadResponse.json();
-                throw new Error(`ImageKit upload failed: ${errorData.message}`);
-            }
-            
-            const uploadResult = await uploadResponse.json();
-            imageId = uploadResult.fileId; // Save the new fileId
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(`ImageKit upload failed: ${errorData.message}`);
         }
 
-        if (!imageId) {
-            throw new Error('An image is required. Please select an image to upload.');
-        }
+        const uploadResult = await uploadResponse.json();
+        imageId = uploadResult.fileId;
+      }
 
-        const finalProductData = {
-          ...productData,
-          imageId: imageId,
-        };
+      if (!imageId) {
+        throw new Error(
+          'An image is required. Please select an image to upload.'
+        );
+      }
 
-        // Step 2: Save product data to Firebase
-        if (editingProduct) {
-            // Update existing product
-            const productRef = ref(database, `products/${editingProduct.key}`);
-            await update(productRef, finalProductData);
-            toast({
-                title: 'Product Updated',
-                description: 'The product has been successfully updated.',
+      const finalProductData = {
+        ...productData,
+        imageId: imageId,
+        createdAt: serverTimestamp(),
+      };
+
+      if (editingProduct) {
+        const docRef = doc(firestore, `products/${editingProduct.id}`);
+        updateDoc(docRef, finalProductData)
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: docRef.path,
+                    operation: 'update',
+                    requestResourceData: finalProductData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({
+                    variant: 'destructive',
+                    title: 'Update Failed',
+                    description: 'Could not update the product. Please try again.',
+                });
             });
-        } else {
-            // Add new product
-            const productsRef = ref(database, 'products');
-            const newProductRef = push(productsRef);
-            await set(newProductRef, finalProductData);
-            toast({
-                title: 'Product Added',
-                description: 'The new product has been successfully added.',
+        toast({
+          title: 'Product Updated',
+          description: 'The product has been successfully updated.',
+        });
+      } else {
+        addDoc(productsCollection, finalProductData)
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: productsCollection.path,
+                    operation: 'create',
+                    requestResourceData: finalProductData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({
+                    variant: 'destructive',
+                    title: 'Save Failed',
+                    description: 'Could not save the new product. Please try again.',
+                });
             });
-        }
-        setIsDialogOpen(false);
+        toast({
+          title: 'Product Added',
+          description: 'The new product has been successfully added.',
+        });
+      }
+      setIsDialogOpen(false);
     } catch (error: any) {
-      console.error("Error saving product:", error);
+      console.error('Error saving product:', error);
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: error.message || 'Could not save the product. Please try again.',
+        description:
+          error.message || 'Could not save the product. Please try again.',
       });
     }
   };
@@ -195,17 +241,30 @@ export default function AdminProductsPage() {
             <TableBody>
               {products.length > 0 ? (
                 products.map((product) => (
-                  <TableRow key={product.key}>
+                  <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.brand}</TableCell>
-                    <TableCell>{Array.isArray(product.category) ? product.category.join(', ') : ''}</TableCell>
+                    <TableCell>
+                      {Array.isArray(product.category)
+                        ? product.category.join(', ')
+                        : ''}
+                    </TableCell>
                     <TableCell>{formatPrice(product.price)}</TableCell>
                     <TableCell>{product.discount || 0}%</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(product)} className="mr-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(product)}
+                        className="mr-2"
+                      >
                         Edit
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(product.key)}>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(product.id)}
+                      >
                         Delete
                       </Button>
                     </TableCell>
