@@ -4,12 +4,11 @@ import { NextResponse } from 'next/server';
 import ImageKit from 'imagekit';
 
 // Initialize ImageKit securely on the server
-// DIAGNOSTIC: Hardcoding credentials to isolate the issue.
-// This is NOT a secure practice for production.
+// These values must be set in your .env file
 const imagekit = new ImageKit({
-  publicKey: "public_yw+V6c+9VKyU+t7YiV7o189QGeQ=",
-  privateKey: "/NNxyjKnDB58I3OWclSeIRFpqQU=",
-  urlEndpoint: "https://ik.imagekit.io/74zo8wkyp",
+  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
 });
 
 export async function GET(request: Request) {
@@ -18,8 +17,10 @@ export async function GET(request: Request) {
     return NextResponse.json(authenticationParameters);
   } catch (error) {
     console.error('Error getting ImageKit auth params:', error);
+    // Provide a more specific error message in development
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: 'Failed to get authentication parameters' },
+      { error: `Failed to get authentication parameters. Please check your server-side ImageKit credentials. Details: ${errorMessage}` },
       { status: 500 }
     );
   }
