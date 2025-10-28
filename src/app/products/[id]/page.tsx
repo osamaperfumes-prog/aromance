@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
 const constructImageUrl = (imageId: string) => 
-  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}${imageId}`;
+  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${imageId}`;
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -62,8 +62,7 @@ export default function ProductDetailPage() {
   
   const handleAddToCart = () => {
     if (!product) return;
-    const productWithImageUrl = { ...product, imageUrl: imageUrl };
-    addToCart(productWithImageUrl);
+    addToCart(product);
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`,

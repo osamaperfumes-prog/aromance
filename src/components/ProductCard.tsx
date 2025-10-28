@@ -15,7 +15,7 @@ interface ProductCardProps {
 }
 
 const constructImageUrl = (imageId: string) => 
-  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}${imageId}`;
+  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${imageId}`;
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
@@ -23,8 +23,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const imageUrl = product.imageId ? constructImageUrl(product.imageId) : '/placeholder.svg';
 
   const handleAddToCart = () => {
-    const productWithImageUrl = { ...product, imageUrl: imageUrl };
-    addToCart(productWithImageUrl);
+    addToCart(product);
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`,
