@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,14 +18,12 @@ import type { Product } from '@/lib/types';
 import { categories } from '@/lib/data';
 import Image from 'next/image';
 
-
-// The product type passed in might include a key if it's being edited
 type EditableProduct = (Product & { key?: string; }) | null;
 
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => Promise<void>;
+  onSave: (product: Omit<Product, 'id'>) => Promise<void>;
   product: EditableProduct;
 }
 
@@ -36,9 +34,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
   const [price, setPrice] = useState('');
   const [discount, setDiscount] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [imageFile, setImageFile] = useState<File | undefined>();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
+  const [imageUrl, setImageUrl] = useState('');
 
   useEffect(() => {
     if (product) {
@@ -48,13 +44,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice(String(product.price));
       setDiscount(String(product.discount || 0));
       setSelectedCategories(Array.isArray(product.category) ? product.category : []);
-      // If product has an existing image, we can display it.
-      if (product.imageId) {
-        setImagePreview(`${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}`);
-      } else {
-        setImagePreview(null);
-      }
-      setImageFile(undefined);
+      setImageUrl(product.imageUrl || '');
     } else {
       // Reset form when adding new
       setName('');
@@ -63,8 +53,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice('');
       setDiscount('0');
       setSelectedCategories([]);
-      setImageFile(undefined);
-      setImagePreview(null);
+      setImageUrl('');
     }
   }, [product, open]);
 
@@ -74,27 +63,11 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
     );
   };
   
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-        setImageFile(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result as string);
-        }
-        reader.readAsDataURL(file);
-    }
-  }
-
   const handleSubmit = async () => {
     // Basic validation
-    if (!name || !brand || !price || selectedCategories.length === 0) {
-      alert('Please fill out all required fields, including at least one category.');
+    if (!name || !brand || !price || !imageUrl || selectedCategories.length === 0) {
+      alert('Please fill out all required fields, including image URL and at least one category.');
       return;
-    }
-    if (!product && !imageFile) {
-        alert('An image is required when adding a new product.');
-        return;
     }
     
     await onSave({
@@ -104,7 +77,8 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       price: parseFloat(price),
       discount: parseFloat(discount) || 0,
       category: selectedCategories,
-    }, imageFile);
+      imageUrl: imageUrl,
+    });
   };
 
   return (
@@ -165,14 +139,14 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="image" className="text-right pt-2">
-              Image
+            <Label htmlFor="imageUrl" className="text-right pt-2">
+              Image URL
             </Label>
              <div className="col-span-3">
-                <Input id="image" type="file" accept="image/*" onChange={handleImageChange} />
-                {imagePreview && (
+                <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png"/>
+                {imageUrl && (
                     <div className="mt-4 relative w-full h-48">
-                        <Image src={imagePreview} alt="Image preview" fill className="rounded-md object-contain" />
+                        <Image src={imageUrl} alt="Image preview" fill className="rounded-md object-contain" />
                     </div>
                 )}
              </div>

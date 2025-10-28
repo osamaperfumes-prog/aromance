@@ -14,7 +14,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { FirestorePermissionError, errorEmitter } from '@/firebase';
+import { FirestorePermissionError, errorEmitter, useMemoFirebase } from '@/firebase';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -26,8 +26,8 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const docRef = useMemo(() => {
-    if (!firestore || !id) return null;
+  const docRef = useMemoFirebase(() => {
+    if (!firestore || typeof id !== 'string') return null;
     return doc(firestore, `products/${id}`);
   }, [firestore, id]);
 
@@ -55,7 +55,7 @@ export default function ProductDetailPage() {
     return () => unsubscribe();
   }, [docRef]);
 
-  const imageUrl = (product && product.imageId) ? `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}` : '/placeholder.svg';
+  const imageUrl = (product && product.imageUrl) ? product.imageUrl : '/placeholder.svg';
   
   const handleAddToCart = () => {
     if (!product) return;
@@ -107,7 +107,7 @@ export default function ProductDetailPage() {
     <div className="container mx-auto py-8 md:py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
         <div className="aspect-square relative rounded-lg overflow-hidden bg-card">
-          {product.imageId && (
+          {product.imageUrl && (
             <Image
               src={imageUrl}
               alt={product.name}

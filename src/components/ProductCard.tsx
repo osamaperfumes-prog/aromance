@@ -17,7 +17,7 @@ interface ProductCardProps {
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const { addToCart } = useCart();
-  const imageUrl = product.imageId ? `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}` : '/placeholder.svg';
+  const imageUrl = product.imageUrl || '/placeholder.svg';
 
   const handleAddToCart = () => {
     addToCart(product);
