@@ -1,4 +1,4 @@
-import type { Category, Product, Testimonial, FooterLink, NavLink, TrustBadge, InfoSection, AromanceFactorPoint } from './types';
+import type { Category, FooterLink, NavLink, TrustBadge, InfoSection, AromanceFactorPoint } from './types';
 import { Award, Bot, CheckCircle, Lock, Package, PackageCheck, Send, ShieldCheck, ShoppingBag, Truck, Facebook, Instagram } from 'lucide-react';
 import { WhatsappIcon } from '@/components/WhatsappIcon';
 
@@ -16,14 +16,6 @@ export const categories: Category[] = [
   { title: 'Travel Size', description: 'Perfect for on-the-go.', imageId: 'shop-by-type-2' },
   { title: 'Gift Sets', description: 'Beautifully packaged for any occasion.', imageId: 'shop-by-type-3' },
   { title: 'Samples', description: 'Discover your new favorite scent.', imageId: 'shop-by-type-4' },
-];
-
-// This is now just used for testimonials and other static content
-export const testimonials: Testimonial[] = [
-  { author: 'Jessica P.', quote: 'Amazing prices and super fast shipping! I found my favorite discontinued perfume here.', rating: 5, imageId: 'testimonial-1' },
-  { author: 'Mike R.', quote: '100% authentic, I compared it with my store-bought bottle. Will definitely buy again.', rating: 5, imageId: 'testimonial-2' },
-  { author: 'Sarah L.', quote: 'The gift set was beautifully packaged and arrived on time for my sister\'s birthday. She loved it!', rating: 5, imageId: 'testimonial-3' },
-  { author: 'David C.', quote: 'Great selection of niche fragrances. The customer service was also very helpful.', rating: 4, imageId: 'testimonial-4' },
 ];
 
 export const rewards: InfoSection = {

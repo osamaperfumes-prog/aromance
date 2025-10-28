@@ -7,13 +7,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { ProductCard } from '@/components/ProductCard';
-import { categories, testimonials, trustBadges } from '@/lib/data';
+import { categories, trustBadges } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { getDatabase, ref, onValue, query, orderByChild, limitToLast } from 'firebase/database';
-import type { Product } from '@/lib/types';
+import type { Product, Testimonial } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type ProductWithId = Product & { id: string };
@@ -22,17 +22,26 @@ export default function Home() {
   const testimonialImages = PlaceHolderImages.filter(img => img.id.startsWith('testimonial'));
   const { database } = useFirebase();
   const [newArrivals, setNewArrivals] = useState<ProductWithId[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingTestimonials, setIsLoadingTestimonials] = useState(true);
 
   const recentProductsQuery = useMemoFirebase(() => {
     if (!database) return null;
     const productsRef = ref(database, 'products');
     return query(productsRef, orderByChild('createdAt'), limitToLast(4));
   }, [database]);
+  
+  const testimonialsQuery = useMemoFirebase(() => {
+    if (!database) return null;
+    const testimonialsRef = ref(database, 'testimonials');
+    return query(testimonialsRef, orderByChild('createdAt'), limitToLast(4));
+  }, [database]);
+
 
   useEffect(() => {
     if (!recentProductsQuery) {
-        setIsLoading(false);
+        setIsLoadingProducts(false);
         return;
     };
 
@@ -47,14 +56,40 @@ export default function Home() {
         } else {
             setNewArrivals([]);
         }
-        setIsLoading(false);
+        setIsLoadingProducts(false);
     }, (error) => {
         console.error("Error fetching new arrivals:", error);
-        setIsLoading(false);
+        setIsLoadingProducts(false);
     });
 
     return () => unsubscribe();
   }, [recentProductsQuery]);
+
+  useEffect(() => {
+    if (!testimonialsQuery) {
+        setIsLoadingTestimonials(false);
+        return;
+    }
+
+    const unsubscribe = onValue(testimonialsQuery, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const testimonialsList: Testimonial[] = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key]
+            }));
+            setTestimonials(testimonialsList.reverse());
+        } else {
+            setTestimonials([]);
+        }
+        setIsLoadingTestimonials(false);
+    }, (error) => {
+        console.error("Error fetching testimonials:", error);
+        setIsLoadingTestimonials(false);
+    });
+
+    return () => unsubscribe();
+  }, [testimonialsQuery]);
 
 
   return (
@@ -119,7 +154,7 @@ export default function Home() {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {isLoading ? (
+            {isLoadingProducts ? (
                Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="flex flex-col space-y-3">
                   <Skeleton className="h-[250px] w-full rounded-lg" />
@@ -145,34 +180,55 @@ export default function Home() {
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl text-center mb-8">What Our Customers Say</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {testimonials.map((testimonial, index) => {
-              const image = testimonialImages[index % testimonialImages.length];
-              return (
-                <Card key={index} className="flex flex-col">
-                  <CardContent className="pt-6 flex-grow">
-                    <div className="flex gap-0.5 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-5 h-5 ${i < testimonial.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
-                      ))}
-                    </div>
-                    <p className="text-muted-foreground italic">&quot;{testimonial.quote}&quot;</p>
-                  </CardContent>
-                  <CardFooter className="flex items-center gap-4">
-                    {image && (
-                      <Image
-                        src={image.imageUrl}
-                        alt="Perfume bottle"
-                        data-ai-hint={image.imageHint}
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                    )}
-                    <div className="font-semibold">{testimonial.author}</div>
-                  </CardFooter>
-                </Card>
-              );
-            })}
+            {isLoadingTestimonials ? (
+               Array.from({ length: 4 }).map((_, index) => (
+                 <Card key={index}>
+                   <CardContent className="pt-6">
+                     <Skeleton className="h-5 w-24 mb-2" />
+                     <Skeleton className="h-4 w-full mb-1" />
+                     <Skeleton className="h-4 w-full mb-1" />
+                     <Skeleton className="h-4 w-3/4" />
+                   </CardContent>
+                   <CardFooter>
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="ml-4 space-y-2">
+                         <Skeleton className="h-4 w-24" />
+                      </div>
+                   </CardFooter>
+                 </Card>
+               ))
+            ) : testimonials.length > 0 ? (
+                testimonials.map((testimonial, index) => {
+                  const image = testimonialImages[index % testimonialImages.length];
+                  return (
+                    <Card key={testimonial.id} className="flex flex-col">
+                      <CardContent className="pt-6 flex-grow">
+                        <div className="flex gap-0.5 mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className={`w-5 h-5 ${i < testimonial.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
+                          ))}
+                        </div>
+                        <p className="text-muted-foreground italic">&quot;{testimonial.quote}&quot;</p>
+                      </CardContent>
+                      <CardFooter className="flex items-center gap-4">
+                        {image && (
+                          <Image
+                            src={image.imageUrl}
+                            alt="Customer"
+                            data-ai-hint={image.imageHint}
+                            width={40}
+                            height={40}
+                            className="rounded-full"
+                          />
+                        )}
+                        <div className="font-semibold">{testimonial.author}</div>
+                      </CardFooter>
+                    </Card>
+                  );
+                })
+            ) : (
+                <p className="text-center col-span-full">No reviews yet. Be the first to leave one!</p>
+            )}
           </div>
         </div>
       </section>

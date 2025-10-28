@@ -32,10 +32,12 @@ export type CartItem = Product & {
 };
 
 export type Testimonial = {
+  id: string;
   author: string;
   quote: string;
   rating: number; // 1-5
-  imageId: string;
+  orderId?: string;
+  createdAt: number;
 };
 
 export type InfoSection = {
