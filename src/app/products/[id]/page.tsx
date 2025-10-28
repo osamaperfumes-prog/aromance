@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
@@ -44,7 +43,7 @@ export default function ProductDetailPage() {
     return () => unsubscribe();
   }, [database, id]);
 
-  const image = product ? PlaceHolderImages.find(img => img.id === product.imageId) : undefined;
+  const imageUrl = product ? `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}` : '';
   
   const handleAddToCart = () => {
     if (!product) return;
@@ -96,12 +95,11 @@ export default function ProductDetailPage() {
     <div className="container mx-auto py-8 md:py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
         <div className="aspect-square relative rounded-lg overflow-hidden bg-card">
-          {image && (
+          {product.imageId && (
             <Image
-              src={image.imageUrl}
+              src={imageUrl}
               alt={product.name}
               fill
-              data-ai-hint={image.imageHint}
               className="object-cover"
             />
           )}

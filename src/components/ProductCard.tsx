@@ -2,7 +2,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +17,7 @@ interface ProductCardProps {
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const { addToCart } = useCart();
-  const image = PlaceHolderImages.find(img => img.id === product.imageId);
+  const imageUrl = `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}`;
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -33,15 +32,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <CardHeader className="p-0 relative">
         <Link href={`/products/${product.id}`} className="block">
           <div className="aspect-square relative">
-            {image && (
-              <Image
-                src={image.imageUrl}
+            <Image
+                src={imageUrl}
                 alt={product.name}
                 fill
-                data-ai-hint={image.imageHint}
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
-            )}
             {product.discount > 0 && (
               <div className="absolute top-3 right-3 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded-sm">
                 {product.discount}% OFF
@@ -66,7 +62,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           {product.description}
         </p>
         <div className="mt-2 flex items-baseline gap-2">
-          <p className="text-lg font-bold text-primary">{formatPrice(product.price * (1 - product.discount / 100))}</p>
+          <p className="text-lg font-bold text-primary">{formatPrice(product.price * (1 - (product.discount || 0) / 100))}</p>
           {product.discount > 0 && (
             <p className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</p>
           )}

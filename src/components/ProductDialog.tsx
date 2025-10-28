@@ -16,14 +16,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Product } from '@/lib/types';
 import { categories } from '@/lib/data';
+import Image from 'next/image';
+
 
 // The product type passed in might include a key if it's being edited
-type EditableProduct = (Product & { key?: string; description?: string }) | null;
+type EditableProduct = (Product & { key?: string; }) | null;
 
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product & { description: string }, 'id' | 'imageId'>, imageFile?: File) => void;
+  onSave: (product: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => void;
   product: EditableProduct;
 }
 
@@ -47,9 +49,12 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setDiscount(String(product.discount || 0));
       setSelectedCategories(Array.isArray(product.category) ? product.category : []);
       // If product has an existing image, we can display it.
-      // For simplicity, we'll just reset the file input.
+      if (product.imageId) {
+        setImagePreview(`${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${product.imageId}`);
+      } else {
+        setImagePreview(null);
+      }
       setImageFile(undefined);
-      setImagePreview(null);
     } else {
       // Reset form when adding new
       setName('');
@@ -111,7 +116,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
             {product ? 'Update the details of the product.' : 'Enter the details for the new product.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               Name
@@ -166,8 +171,8 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
              <div className="col-span-3">
                 <Input id="image" type="file" accept="image/*" onChange={handleImageChange} />
                 {imagePreview && (
-                    <div className="mt-4">
-                        <img src={imagePreview} alt="Image preview" className="rounded-md max-h-48" />
+                    <div className="mt-4 relative w-full h-48">
+                        <Image src={imagePreview} alt="Image preview" fill className="rounded-md object-contain" />
                     </div>
                 )}
              </div>

@@ -17,8 +17,8 @@ import type { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-// Extend product type to include the key and other fields from Realtime Database
-type ProductWithKey = Product & { key: string; description: string };
+// Extend product type to include the key
+type ProductWithKey = Product & { key: string };
 
 export default function AdminProductsPage() {
   const { database } = useFirebase();
@@ -39,9 +39,10 @@ export default function AdminProductsPage() {
         if (data) {
           const productsList: ProductWithKey[] = Object.entries(data).map(([key, value]) => ({
             key,
-            ...(value as Omit<ProductWithKey, 'key'>),
+            id: key,
+            ...((value as Omit<Product, 'id'>)),
           }));
-          setProducts(productsList);
+          setProducts(productsList.reverse());
         } else {
           setProducts([]);
         }
@@ -91,44 +92,80 @@ export default function AdminProductsPage() {
       }
   };
 
-  const handleSave = async (productData: Omit<Product & { description: string }, 'id' | 'imageId'>, imageFile?: File) => {
+  const handleSave = async (productData: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => {
     if (!database) return;
     
-    // NOTE: This is where secure image upload logic would go.
-    // For now, we will just save the product data without a real image URL.
-    // I will add a placeholder imageId. In a real app, you would get the URL
-    // back from your image hosting service (like ImageKit).
-    const finalProductData = {
-      ...productData,
-      imageId: productData.imageId || 'product-1', // Placeholder
-    };
+    let imageId = editingProduct?.imageId || '';
 
     try {
-      if (editingProduct) {
-        // Update existing product
-        const productRef = ref(database, `products/${editingProduct.key}`);
-        await update(productRef, finalProductData);
-        toast({
-            title: 'Product Updated',
-            description: 'The product has been successfully updated.',
-        });
-      } else {
-        // Add new product
-        const productsRef = ref(database, 'products');
-        const newProductRef = push(productsRef);
-        await set(newProductRef, finalProductData);
-        toast({
-            title: 'Product Added',
-            description: 'The new product has been successfully added.',
-        });
-      }
-      setIsDialogOpen(false);
-    } catch (error) {
+        // Step 1: Handle image upload if a new file is provided
+        if (imageFile) {
+            // Step 1a: Get authentication parameters from our secure API endpoint
+            const authResponse = await fetch('/api/upload');
+            if (!authResponse.ok) {
+                throw new Error('Failed to get upload authentication from server.');
+            }
+            const authParams = await authResponse.json();
+
+            // Step 1b: Prepare FormData for ImageKit
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            formData.append('fileName', imageFile.name);
+            formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!); // Use public key from env
+            formData.append('signature', authParams.signature);
+            formData.append('expire', authParams.expire);
+            formData.append('token', authParams.token);
+
+            // Step 1c: Upload the image to ImageKit
+            const uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json();
+                throw new Error(`ImageKit upload failed: ${errorData.message}`);
+            }
+            
+            const uploadResult = await uploadResponse.json();
+            imageId = uploadResult.fileId; // Save the new fileId
+        }
+
+        if (!imageId) {
+            throw new Error('An image is required. Please select an image to upload.');
+        }
+
+        const finalProductData = {
+          ...productData,
+          imageId: imageId,
+        };
+
+        // Step 2: Save product data to Firebase
+        if (editingProduct) {
+            // Update existing product
+            const productRef = ref(database, `products/${editingProduct.key}`);
+            await update(productRef, finalProductData);
+            toast({
+                title: 'Product Updated',
+                description: 'The product has been successfully updated.',
+            });
+        } else {
+            // Add new product
+            const productsRef = ref(database, 'products');
+            const newProductRef = push(productsRef);
+            await set(newProductRef, finalProductData);
+            toast({
+                title: 'Product Added',
+                description: 'The new product has been successfully added.',
+            });
+        }
+        setIsDialogOpen(false);
+    } catch (error: any) {
       console.error("Error saving product:", error);
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: 'Could not save the product. Please try again.',
+        description: error.message || 'Could not save the product. Please try again.',
       });
     }
   };
