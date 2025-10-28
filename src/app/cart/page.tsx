@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { ref, set, serverTimestamp, transaction } from "firebase/database";
+import { ref, set, serverTimestamp, runTransaction } from "firebase/database";
 
 
 export default function CartPage() {
@@ -60,7 +60,7 @@ export default function CartPage() {
     const counterRef = ref(database, 'orderCounter');
 
     try {
-        const { committed, snapshot } = await transaction(counterRef, (currentValue) => {
+        const { committed, snapshot } = await runTransaction(counterRef, (currentValue) => {
             // If the counter doesn't exist, initialize it to 1000. Otherwise, increment it.
             return (currentValue || 999) + 1;
         });
