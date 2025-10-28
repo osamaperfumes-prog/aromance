@@ -27,13 +27,11 @@ import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 type ProductWithId = Product & { id: string };
 
 export default function AdminProductsPage() {
-  const { firestore, firebaseApp } = useFirebase();
-  const storage = useMemo(() => firestore ? getStorage(firebaseApp) : null, [firestore, firebaseApp]);
+  const { firestore } = useFirebase();
   const { toast } = useToast();
   const [products, setProducts] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,13 +115,21 @@ export default function AdminProductsPage() {
     productData: Omit<Product, 'id' | 'imageId'>,
     imageFile?: File
   ) => {
-    if (!firestore || !productsCollection || !storage) return;
+    if (!firestore || !productsCollection) return;
 
     let imageId = editingProduct?.imageId || '';
 
     try {
       if (imageFile) {
-        const authResponse = await fetch('/api/upload');
+        // Request authentication parameters from your server, now sending the filename
+        const authResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileName: imageFile.name }),
+        });
+
         if (!authResponse.ok) {
           throw new Error('Failed to get upload authentication from server.');
         }
@@ -132,6 +138,7 @@ export default function AdminProductsPage() {
         const formData = new FormData();
         formData.append('file', imageFile);
         formData.append('fileName', imageFile.name);
+        // Ensure you use the public key from environment variables
         formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
         formData.append('signature', authParams.signature);
         formData.append('expire', authParams.expire);
