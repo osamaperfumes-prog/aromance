@@ -14,13 +14,11 @@ interface ProductCardProps {
   product: Product;
 }
 
-const constructImageUrl = (imageId: string) => 
-  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${imageId}`;
-
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const { addToCart } = useCart();
-  const imageUrl = product.imageId ? constructImageUrl(product.imageId) : '/placeholder.svg';
+  // Use the stored imageUrl directly, with a fallback.
+  const imageUrl = product.imageUrl || '/placeholder.svg';
 
   const handleAddToCart = () => {
     addToCart(product);

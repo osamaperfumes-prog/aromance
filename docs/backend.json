@@ -18,9 +18,9 @@
           "type": "string",
           "description": "Detailed description of the perfume."
         },
-        "imageId": {
+        "imageUrl": {
           "type": "string",
-          "description": "ID of the product image from ImageKit."
+          "description": "URL of the product image from ImageKit."
         },
         "price": {
           "type": "number",
@@ -47,7 +47,7 @@
         "name",
         "brand",
         "description",
-        "imageId",
+        "imageUrl",
         "price",
         "category",
         "createdAt"
@@ -130,9 +130,9 @@
               "brand": {"type": "string"},
               "quantity": {"type": "number"},
               "itemPrice": {"type": "number"},
-              "imageId": {"type": "string"}
+              "imageUrl": {"type": "string"}
             },
-            "required": ["productId", "name", "brand", "quantity", "itemPrice", "imageId"]
+            "required": ["productId", "name", "brand", "quantity", "itemPrice", "imageUrl"]
           }
         }
       },

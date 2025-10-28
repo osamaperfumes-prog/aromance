@@ -112,16 +112,15 @@ export default function AdminProductsPage() {
   };
 
   const handleSave = async (
-    productData: Omit<Product, 'id' | 'imageId'>,
+    productData: Omit<Product, 'id' | 'imageUrl'>,
     imageFile?: File
   ) => {
     if (!firestore || !productsCollection) return;
 
-    let imageId = editingProduct?.imageId || '';
+    let imageUrl = editingProduct?.imageUrl || '';
 
     try {
       if (imageFile) {
-        // Request authentication parameters from your server, now sending the filename
         const authResponse = await fetch('/api/upload', {
           method: 'POST',
           headers: {
@@ -138,7 +137,6 @@ export default function AdminProductsPage() {
         const formData = new FormData();
         formData.append('file', imageFile);
         formData.append('fileName', imageFile.name);
-        // Ensure you use the public key from environment variables
         formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
         formData.append('signature', authParams.signature);
         formData.append('expire', authParams.expire);
@@ -158,10 +156,10 @@ export default function AdminProductsPage() {
         }
 
         const uploadResult = await uploadResponse.json();
-        imageId = uploadResult.fileId;
+        imageUrl = uploadResult.url; // Store the full URL
       }
 
-      if (!imageId && !editingProduct?.imageId) {
+      if (!imageUrl && !editingProduct?.imageUrl) {
         throw new Error(
           'An image is required. Please select an image to upload.'
         );
@@ -169,7 +167,7 @@ export default function AdminProductsPage() {
 
       const finalProductData = {
         ...productData,
-        imageId: imageId,
+        imageUrl: imageUrl, // Save imageUrl
         createdAt: serverTimestamp(),
       };
 

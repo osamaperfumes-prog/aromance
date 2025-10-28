@@ -23,7 +23,7 @@ export type Product = {
   description: string;
   price: number;
   discount: number; // Percentage
-  imageId: string;
+  imageUrl: string;
   category: string[];
 };
 

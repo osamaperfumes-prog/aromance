@@ -23,12 +23,9 @@ type EditableProduct = (Product & { key?: string; }) | null;
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => Promise<void>;
+  onSave: (product: Omit<Product, 'id' | 'imageUrl'>, imageFile?: File) => Promise<void>;
   product: EditableProduct;
 }
-
-const constructImageUrl = (imageId: string) => 
-  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}${imageId}`;
 
 export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDialogProps) => {
   const [name, setName] = useState('');
@@ -49,8 +46,8 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice(String(product.price));
       setDiscount(String(product.discount || 0));
       setSelectedCategories(Array.isArray(product.category) ? product.category : []);
-      if (product.imageId) {
-        setImagePreviewUrl(constructImageUrl(product.imageId));
+      if (product.imageUrl) {
+        setImagePreviewUrl(product.imageUrl);
       } else {
         setImagePreviewUrl('');
       }
@@ -83,7 +80,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
   };
   
   const handleSubmit = async () => {
-    if (!name || !brand || !price || (!imageFile && !product?.imageId) || selectedCategories.length === 0) {
+    if (!name || !brand || !price || (!imageFile && !product?.imageUrl) || selectedCategories.length === 0) {
       alert('Please fill out all required fields, including an image and at least one category.');
       return;
     }

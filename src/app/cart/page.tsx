@@ -17,9 +17,6 @@ import { useFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { FirestorePermissionError, errorEmitter } from '@/firebase';
 
-const constructImageUrl = (imageId: string) => 
-  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}/${imageId}`;
-
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
   const { firestore } = useFirebase();
@@ -76,7 +73,7 @@ export default function CartPage() {
             brand: item.brand,
             quantity: item.quantity,
             itemPrice: item.price * (1 - (item.discount || 0) / 100),
-            imageId: item.imageId,
+            imageUrl: item.imageUrl,
         }))
     };
 
@@ -139,11 +136,11 @@ export default function CartPage() {
 
             {cartItems.map((item) => {
                 const finalPrice = item.price * (1 - (item.discount || 0) / 100);
-                const imageUrl = item.imageId ? constructImageUrl(item.imageId) : '/placeholder.svg';
+                const imageUrl = item.imageUrl || '/placeholder.svg';
               return (
                 <div key={item.id} className="flex flex-col md:flex-row items-center border-b py-4">
                   <div className="w-full md:w-1/2 flex items-start md:items-center gap-4 p-2">
-                    {item.imageId && (
+                    {item.imageUrl && (
                       <Image
                         src={imageUrl}
                         alt={item.name}
