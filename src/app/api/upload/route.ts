@@ -4,10 +4,12 @@ import { NextResponse } from 'next/server';
 import ImageKit from 'imagekit';
 
 // Initialize ImageKit securely on the server
+// DIAGNOSTIC: Hardcoding credentials to isolate the issue.
+// This is NOT a secure practice for production.
 const imagekit = new ImageKit({
-  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
-  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+  publicKey: "public_yw+V6c+9VKyU+t7YiV7o189QGeQ=",
+  privateKey: "/NNxyjKnDB58I3OWclSeIRFpqQU=",
+  urlEndpoint: "https://ik.imagekit.io/74zo8wkyp",
 });
 
 export async function GET(request: Request) {
