@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { getDatabase, ref, onValue, query, orderByChild } from 'firebase/database';
+import { getDatabase, ref, onValue, query, orderByChild, update } from 'firebase/database';
 import {
   Table,
   TableHeader,
@@ -25,6 +25,10 @@ import {
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 
 // Define the type for an order item
 interface OrderItem {
@@ -36,12 +40,14 @@ interface OrderItem {
   imageUrl: string;
 }
 
+type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
 // Define the type for an entire order
 interface Order {
   id: string; // The order ID (e.g., 1001)
   orderDate: number; // Timestamp
   totalAmount: number;
-  status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: OrderStatus;
   shippingAddress: string;
   buyerName: string;
   phoneNumber: string;
@@ -52,6 +58,7 @@ interface Order {
 
 export default function AdminOrdersPage() {
   const { database } = useFirebase();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -88,6 +95,26 @@ export default function AdminOrdersPage() {
     return () => unsubscribe();
   }, [ordersQuery]);
 
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+    if (!database) return;
+    const orderRef = ref(database, `orders/${orderId}`);
+    try {
+        await update(orderRef, { status: newStatus });
+        toast({
+            title: "Status Updated",
+            description: `Order #${orderId} has been updated to ${newStatus}.`
+        });
+    } catch (error) {
+        console.error("Error updating status:", error);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not update the order status."
+        });
+    }
+  };
+
+
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDialogOpen(true);
@@ -106,6 +133,9 @@ export default function AdminOrdersPage() {
         return 'outline';
     }
   };
+
+  const orderStatuses: OrderStatus[] = ['processing', 'shipped', 'delivered', 'cancelled'];
+
 
   return (
     <div className="container mx-auto py-8">
@@ -139,7 +169,29 @@ export default function AdminOrdersPage() {
                     <TableCell>{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell className="capitalize">{order.deliveryMethod}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(order.status)} className="capitalize">{order.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusVariant(order.status)} className="capitalize">{order.status}</Badge>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Change status</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {orderStatuses.map(status => (
+                                    <DropdownMenuItem 
+                                        key={status} 
+                                        onClick={() => handleUpdateStatus(order.id, status)}
+                                        disabled={order.status === status}
+                                        className="capitalize"
+                                    >
+                                        {status}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" onClick={() => handleViewDetails(order)}>
