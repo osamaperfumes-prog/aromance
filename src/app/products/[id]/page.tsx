@@ -8,13 +8,16 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingCart, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useMemo } from 'react';
-import { useFirebase } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { FirestorePermissionError, errorEmitter, useMemoFirebase } from '@/firebase';
+import { FirestorePermissionError, errorEmitter } from '@/firebase';
+
+const constructImageUrl = (imageId: string) => 
+  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}${imageId}`;
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -55,11 +58,12 @@ export default function ProductDetailPage() {
     return () => unsubscribe();
   }, [docRef]);
 
-  const imageUrl = (product && product.imageUrl) ? product.imageUrl : '/placeholder.svg';
+  const imageUrl = (product && product.imageId) ? constructImageUrl(product.imageId) : '/placeholder.svg';
   
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart(product);
+    const productWithImageUrl = { ...product, imageUrl: imageUrl };
+    addToCart(productWithImageUrl);
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`,
@@ -107,7 +111,7 @@ export default function ProductDetailPage() {
     <div className="container mx-auto py-8 md:py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
         <div className="aspect-square relative rounded-lg overflow-hidden bg-card">
-          {product.imageUrl && (
+          {product.imageId && (
             <Image
               src={imageUrl}
               alt={product.name}

@@ -2,39 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { ProductCard } from '@/components/ProductCard';
-import { useFirebase } from '@/firebase';
-import { ref, onValue } from 'firebase/database';
+import { useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type ProductWithKey = Product & { key: string };
+type ProductWithId = Product & { id: string };
 
 export default function ProductsPage() {
-  const { database } = useFirebase();
-  const [products, setProducts] = useState<ProductWithKey[]>([]);
+  const { firestore } = useFirebase();
+  const [products, setProducts] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!database) return;
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    const productsRef = collection(firestore, 'products');
+    return query(productsRef, orderBy('createdAt', 'desc'));
+  }, [firestore]);
 
-    const productsRef = ref(database, 'products');
-    const unsubscribe = onValue(productsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const productsList: ProductWithKey[] = Object.entries(data).map(([key, value]) => ({
-          key,
-          id: key, // Use the database key as the product ID
-          ...((value as Omit<Product, 'id'>)),
-        }));
-        setProducts(productsList.reverse()); // Show newest first
-      } else {
-        setProducts([]);
-      }
+
+  useEffect(() => {
+    if (!productsQuery) {
+        setIsLoading(false);
+        return;
+    }
+    const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
+      const data: ProductWithId[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Product, 'id'>)
+      }));
+      setProducts(data);
       setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching products:", error);
+        setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [database]);
+  }, [productsQuery]);
 
   return (
     <div className="bg-card">

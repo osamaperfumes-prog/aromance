@@ -11,46 +11,45 @@ import { categories, testimonials, trustBadges } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useFirebase } from '@/firebase';
-import { ref, onValue, limitToLast } from 'firebase/database';
+import { useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, limit, onSnapshot, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type ProductWithKey = Product & { key: string };
+type ProductWithId = Product & { id: string };
 
 export default function Home() {
   const testimonialImages = PlaceHolderImages.filter(img => img.id.startsWith('testimonial'));
-  const { database } = useFirebase();
-  const [newArrivals, setNewArrivals] = useState<ProductWithKey[]>([]);
+  const { firestore } = useFirebase();
+  const [newArrivals, setNewArrivals] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const recentProductsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    const productsRef = collection(firestore, 'products');
+    return query(productsRef, orderBy('createdAt', 'desc'), limit(4));
+  }, [firestore]);
+
   useEffect(() => {
-    if (!database) return;
-
-    const productsRef = ref(database, 'products');
-    // Get the last 8 products added
-    const recentProductsQuery = limitToLast(8);
-
-    const unsubscribe = onValue(ref(database, 'products'), (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const productsList: ProductWithKey[] = Object.entries(data).map(([key, value]) => ({
-            key,
-            id: key, // Use the database key as the product ID
-            ...((value as Omit<Product, 'id'>)),
-          }));
-          // Take the last 8 items and reverse to show newest first
-          setNewArrivals(productsList.slice(-8).reverse());
-        } else {
-          setNewArrivals([]);
-        }
+    if (!recentProductsQuery) {
         setIsLoading(false);
-      }, {
-        onlyOnce: false
-      });
+        return;
+    };
+
+    const unsubscribe = onSnapshot(recentProductsQuery, (snapshot) => {
+        const data: ProductWithId[] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...(doc.data() as Omit<Product, 'id'>)
+        }));
+        setNewArrivals(data);
+        setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching new arrivals:", error);
+        setIsLoading(false);
+    });
 
     return () => unsubscribe();
-  }, [database]);
+  }, [recentProductsQuery]);
 
 
   return (

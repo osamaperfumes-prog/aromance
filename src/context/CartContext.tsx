@@ -1,7 +1,24 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { Product, CartItem } from '@/lib/types';
+
+// Define the shape of a product, now including imageUrl
+export interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  description: string;
+  price: number;
+  discount: number;
+  imageId: string; // Keep as imageId for data model consistency
+  imageUrl: string; // Add imageUrl for cart/display purposes
+  category: string[];
+}
+
+export type CartItem = Product & {
+  quantity: number;
+};
+
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -16,6 +33,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
+  // The product passed to addToCart should now have an imageUrl
   const addToCart = (product: Product) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
@@ -24,6 +42,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
+      // Ensure the product being added has an imageUrl
       return [...prevItems, { ...product, quantity: 1 }];
     });
   };

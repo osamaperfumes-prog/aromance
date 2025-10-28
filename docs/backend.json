@@ -1,15 +1,11 @@
+
 {
   "entities": {
     "Product": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Product",
       "type": "object",
       "description": "Represents a perfume product available for sale.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the product."
-        },
         "name": {
           "type": "string",
           "description": "Name of the perfume product."
@@ -22,49 +18,46 @@
           "type": "string",
           "description": "Detailed description of the perfume."
         },
-        "imageUrl": {
+        "imageId": {
           "type": "string",
-          "description": "URL of the product image.",
-          "format": "uri"
+          "description": "ID of the product image from ImageKit."
         },
         "price": {
           "type": "number",
           "description": "Price of the perfume."
         },
         "category": {
-          "type": "string",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
           "description": "Category of the perfume (e.g., testers, travel size)."
         },
-        "sizeMl": {
+        "discount": {
           "type": "number",
-          "description": "Size of the perfume bottle in milliliters."
+          "description": "The discount percentage applied to the product (e.g., 20 for 20% off)."
         },
-        "discountPercentage": {
-          "type": "number",
-          "description": "The discount percentage applied to the product (e.g., 0.2 for 20% off)."
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the product was created."
         }
       },
       "required": [
-        "id",
         "name",
         "brand",
         "description",
-        "imageUrl",
+        "imageId",
         "price",
         "category",
-        "sizeMl"
+        "createdAt"
       ]
     },
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
       "description": "Represents a user of the Aromance website.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user."
-        },
         "firstName": {
           "type": "string",
           "description": "First name of the user."
@@ -88,63 +81,16 @@
         }
       },
       "required": [
-        "id",
         "firstName",
         "lastName",
         "email"
       ]
     },
-    "Review": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Review",
-      "type": "object",
-      "description": "Represents a customer review for a product.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the review."
-        },
-        "productId": {
-          "type": "string",
-          "description": "Reference to Product. (Relationship: Product 1:N Review)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Review)"
-        },
-        "rating": {
-          "type": "number",
-          "description": "Rating given by the user (e.g., 1 to 5 stars)."
-        },
-        "comment": {
-          "type": "string",
-          "description": "Text comment provided by the user."
-        },
-        "date": {
-          "type": "string",
-          "description": "Date of review submission.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "productId",
-        "userId",
-        "rating",
-        "comment",
-        "date"
-      ]
-    },
     "Order": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Order",
       "type": "object",
       "description": "Represents a customer order.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the order."
-        },
         "orderDate": {
           "type": "string",
           "description": "Date when the order was placed.",
@@ -163,87 +109,42 @@
           "description": "The address the order was shipped to."
         },
         "buyerName": {
-            "type": "string",
-            "description": "Name of the buyer."
+          "type": "string",
+          "description": "Name of the buyer."
         },
         "phoneNumber": {
-            "type": "string",
-            "description": "Phone number of the buyer."
+          "type": "string",
+          "description": "Phone number of the buyer."
         },
         "deliveryMethod": {
-            "type": "string",
-            "description": "Chosen delivery method (e.g., delivery, pickup)."
+          "type": "string",
+          "description": "Chosen delivery method (e.g., delivery, pickup)."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": {"type": "string"},
+              "name": {"type": "string"},
+              "brand": {"type": "string"},
+              "quantity": {"type": "number"},
+              "itemPrice": {"type": "number"},
+              "imageId": {"type": "string"}
+            },
+            "required": ["productId", "name", "brand", "quantity", "itemPrice", "imageId"]
+          }
         }
       },
       "required": [
-        "id",
         "orderDate",
         "totalAmount",
         "status",
         "shippingAddress",
         "buyerName",
         "phoneNumber",
-        "deliveryMethod"
-      ]
-    },
-    "OrderItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "OrderItem",
-      "type": "object",
-      "description": "Represents an item within an order.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the order item."
-        },
-        "orderId": {
-          "type": "string",
-          "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
-        },
-        "productId": {
-          "type": "string",
-          "description": "Reference to Product. (Relationship: Product 1:N OrderItem)"
-        },
-        "quantity": {
-          "type": "number",
-          "description": "Quantity of the product in the order item."
-        },
-        "itemPrice": {
-          "type": "number",
-          "description": "Price of the item at the time of the order."
-        }
-      },
-      "required": [
-        "id",
-        "orderId",
-        "productId",
-        "quantity",
-        "itemPrice"
-      ]
-    },
-    "RewardProgram": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "RewardProgram",
-      "type": "object",
-      "description": "Represents the reward program and its point system.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the reward program."
-        },
-        "pointsPerDollar": {
-          "type": "number",
-          "description": "Number of reward points earned per dollar spent."
-        },
-        "redemptionRate": {
-          "type": "number",
-          "description": "The amount that one reward point is worth in dollars."
-        }
-      },
-      "required": [
-        "id",
-        "pointsPerDollar",
-        "redemptionRate"
+        "deliveryMethod",
+        "items"
       ]
     }
   },
@@ -251,5 +152,25 @@
     "providers": [
       "password"
     ]
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": {
+        "$ref": "#/entities/Product"
+      },
+      "description": "Stores individual product details."
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profile information."
+    },
+    "/orders/{orderId}": {
+        "schema": {
+            "$ref": "#/entities/Order"
+        },
+        "description": "Stores customer order information."
+    }
   }
 }

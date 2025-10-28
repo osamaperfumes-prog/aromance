@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import {
   collection,
   query,
@@ -27,11 +27,13 @@ import { formatPrice } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 type ProductWithId = Product & { id: string };
 
 export default function AdminProductsPage() {
-  const { firestore } = useFirebase();
+  const { firestore, firebaseApp } = useFirebase();
+  const storage = useMemo(() => firestore ? getStorage(firebaseApp) : null, [firestore, firebaseApp]);
   const { toast } = useToast();
   const [products, setProducts] = useState<ProductWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +42,7 @@ export default function AdminProductsPage() {
     null
   );
 
-  const productsCollection = useMemo(() => {
+  const productsCollection = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, 'products');
   }, [firestore]);
@@ -115,7 +117,7 @@ export default function AdminProductsPage() {
     productData: Omit<Product, 'id' | 'imageId'>,
     imageFile?: File
   ) => {
-    if (!firestore || !productsCollection) return;
+    if (!firestore || !productsCollection || !storage) return;
 
     let imageId = editingProduct?.imageId || '';
 
@@ -152,7 +154,7 @@ export default function AdminProductsPage() {
         imageId = uploadResult.fileId;
       }
 
-      if (!imageId) {
+      if (!imageId && !editingProduct?.imageId) {
         throw new Error(
           'An image is required. Please select an image to upload.'
         );

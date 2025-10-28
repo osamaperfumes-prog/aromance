@@ -14,13 +14,17 @@ interface ProductCardProps {
   product: Product;
 }
 
+const constructImageUrl = (imageId: string) => 
+  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}${imageId}`;
+
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const { addToCart } = useCart();
-  const imageUrl = product.imageUrl || '/placeholder.svg';
+  const imageUrl = product.imageId ? constructImageUrl(product.imageId) : '/placeholder.svg';
 
   const handleAddToCart = () => {
-    addToCart(product);
+    const productWithImageUrl = { ...product, imageUrl: imageUrl };
+    addToCart(productWithImageUrl);
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`,

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatPrice } from '@/lib/utils';
 import { Trash2, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -14,13 +13,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { initializeFirebase } from '@/firebase';
-import { ref, push, set, serverTimestamp } from "firebase/database";
+import { useFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { FirestorePermissionError, errorEmitter } from '@/firebase';
+
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
-  // Get database instance directly to avoid auth-dependent hooks
-  const { database } = initializeFirebase();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
 
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -39,6 +39,8 @@ export default function CartPage() {
   }, 0);
   
   const handleCheckout = async () => {
+    if (!firestore) return;
+    
     if (deliveryMethod === 'delivery') {
         if (!buyerName || !phoneNumber || !city || !neighborhood || !street || !buildingNumber) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required buyer and address fields.' });
@@ -72,27 +74,34 @@ export default function CartPage() {
             brand: item.brand,
             quantity: item.quantity,
             itemPrice: item.price * (1 - (item.discount || 0) / 100),
+            imageId: item.imageId,
         }))
     };
 
     try {
-        if (!database) {
-            throw new Error("Realtime Database is not initialized.");
-        }
-        const ordersRef = ref(database, 'orders');
-        const newOrderRef = push(ordersRef);
-        await set(newOrderRef, orderData);
-
-        toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
-        
-        clearCart();
-        setBuyerName('');
-        setPhoneNumber('');
-        setCity('');
-        setNeighborhood('');
-        setStreet('');
-        setBuildingNumber('');
-        setLandmark('');
+        const ordersCollection = collection(firestore, 'orders');
+        addDoc(ordersCollection, orderData)
+          .then(() => {
+            toast({ title: 'Order Placed!', description: 'You will be contacted soon.' });
+            
+            clearCart();
+            setBuyerName('');
+            setPhoneNumber('');
+            setCity('');
+            setNeighborhood('');
+            setStreet('');
+            setBuildingNumber('');
+            setLandmark('');
+          })
+          .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+              path: ordersCollection.path,
+              operation: 'create',
+              requestResourceData: orderData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({ variant: 'destructive', title: 'Order Failed', description: 'There was a problem placing your order. Please try again.' });
+          });
 
     } catch (error: any) {
         console.error("Error placing order:", error);
@@ -127,18 +136,16 @@ export default function CartPage() {
             </div>
 
             {cartItems.map((item) => {
-                const image = PlaceHolderImages.find(img => img.id === item.imageId);
                 const finalPrice = item.price * (1 - (item.discount || 0) / 100);
               return (
                 <div key={item.id} className="flex flex-col md:flex-row items-center border-b py-4">
                   <div className="w-full md:w-1/2 flex items-start md:items-center gap-4 p-2">
-                    {image && (
+                    {item.imageUrl && (
                       <Image
-                        src={image.imageUrl}
+                        src={item.imageUrl}
                         alt={item.name}
                         width={80}
                         height={80}
-                        data-ai-hint={image.imageHint}
                         className="rounded-md object-cover"
                       />
                     )}

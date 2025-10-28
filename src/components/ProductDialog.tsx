@@ -23,9 +23,12 @@ type EditableProduct = (Product & { key?: string; }) | null;
 interface ProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (product: Omit<Product, 'id'>) => Promise<void>;
+  onSave: (product: Omit<Product, 'id' | 'imageId'>, imageFile?: File) => Promise<void>;
   product: EditableProduct;
 }
+
+const constructImageUrl = (imageId: string) => 
+  `${process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}${imageId}`;
 
 export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDialogProps) => {
   const [name, setName] = useState('');
@@ -34,7 +37,9 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
   const [price, setPrice] = useState('');
   const [discount, setDiscount] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [imageUrl, setImageUrl] = useState('');
+  
+  const [imageFile, setImageFile] = useState<File | undefined>();
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
 
   useEffect(() => {
     if (product) {
@@ -44,7 +49,12 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice(String(product.price));
       setDiscount(String(product.discount || 0));
       setSelectedCategories(Array.isArray(product.category) ? product.category : []);
-      setImageUrl(product.imageUrl || '');
+      if (product.imageId) {
+        setImagePreviewUrl(constructImageUrl(product.imageId));
+      } else {
+        setImagePreviewUrl('');
+      }
+      setImageFile(undefined); // Clear file input on edit
     } else {
       // Reset form when adding new
       setName('');
@@ -53,7 +63,8 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       setPrice('');
       setDiscount('0');
       setSelectedCategories([]);
-      setImageUrl('');
+      setImagePreviewUrl('');
+      setImageFile(undefined);
     }
   }, [product, open]);
 
@@ -62,11 +73,18 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       checked ? [...prev, categoryTitle] : prev.filter(c => c !== categoryTitle)
     );
   };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreviewUrl(URL.createObjectURL(file));
+    }
+  };
   
   const handleSubmit = async () => {
-    // Basic validation
-    if (!name || !brand || !price || !imageUrl || selectedCategories.length === 0) {
-      alert('Please fill out all required fields, including image URL and at least one category.');
+    if (!name || !brand || !price || (!imageFile && !product?.imageId) || selectedCategories.length === 0) {
+      alert('Please fill out all required fields, including an image and at least one category.');
       return;
     }
     
@@ -77,8 +95,7 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
       price: parseFloat(price),
       discount: parseFloat(discount) || 0,
       category: selectedCategories,
-      imageUrl: imageUrl,
-    });
+    }, imageFile);
   };
 
   return (
@@ -139,14 +156,14 @@ export const ProductDialog = ({ open, onOpenChange, onSave, product }: ProductDi
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="imageUrl" className="text-right pt-2">
-              Image URL
+            <Label htmlFor="imageFile" className="text-right pt-2">
+              Image
             </Label>
              <div className="col-span-3">
-                <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png"/>
-                {imageUrl && (
+                <Input id="imageFile" type="file" accept="image/*" onChange={handleImageChange} />
+                {imagePreviewUrl && (
                     <div className="mt-4 relative w-full h-48">
-                        <Image src={imageUrl} alt="Image preview" fill className="rounded-md object-contain" />
+                        <Image src={imagePreviewUrl} alt="Image preview" fill className="rounded-md object-contain" />
                     </div>
                 )}
              </div>
