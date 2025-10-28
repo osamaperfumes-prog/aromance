@@ -4,17 +4,17 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProductCard } from '@/components/ProductCard';
 import { useFirebase } from '@/firebase';
-import { ref, onValue } from 'firebase/database';
+import { collection, getDocs } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { searchProducts } from '@/ai/flows/search-flow';
+import { searchProducts } from './actions'; // Updated import
 
 type ProductWithKey = Product & { key: string };
 
 function SearchPageComponent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  const { database } = useFirebase();
+  const { firestore } = useFirebase();
 
   const [allProducts, setAllProducts] = useState<ProductWithKey[]>([]);
   const [keywordResults, setKeywordResults] = useState<ProductWithKey[]>([]);
@@ -23,32 +23,28 @@ function SearchPageComponent() {
   const [isAiLoading, setIsAiLoading] = useState(true);
 
   useEffect(() => {
-    if (!database) return;
+    if (!firestore) return;
 
-    const productsRef = ref(database, 'products');
-    const unsubscribe = onValue(
-      productsRef,
-      (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const productsList: ProductWithKey[] = Object.entries(data).map(
-            ([key, value]) => ({
-              key,
-              id: key,
-              ...((value as Omit<Product, 'id'>)),
-            })
-          );
-          setAllProducts(productsList);
-        } else {
-          setAllProducts([]);
-        }
+    const fetchProducts = async () => {
+      try {
+        const productsRef = collection(firestore, 'products');
+        const snapshot = await getDocs(productsRef);
+        const productsList: ProductWithKey[] = snapshot.docs.map(doc => ({
+          key: doc.id,
+          id: doc.id,
+          ...(doc.data() as Omit<Product, 'id'>),
+        }));
+        setAllProducts(productsList);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+        setAllProducts([]);
+      } finally {
         setIsLoading(false);
-      },
-      { onlyOnce: true } // Fetch all products once
-    );
+      }
+    };
 
-    return () => unsubscribe();
-  }, [database]);
+    fetchProducts();
+  }, [firestore]);
 
   useEffect(() => {
     if (isLoading || !query) {
@@ -70,12 +66,24 @@ function SearchPageComponent() {
 
     // Perform Semantic Search (server-side AI flow)
     async function performSemanticSearch() {
+      if (allProducts.length === 0) {
+        setIsAiLoading(false);
+        return;
+      };
+      
       setIsAiLoading(true);
       try {
+        // The server action now expects categories to be an array.
+        const productsForAI = allProducts.map(p => ({
+          ...p,
+          category: Array.isArray(p.category) ? p.category : [],
+        }));
+
         const result = await searchProducts({
           query,
-          products: allProducts,
+          products: productsForAI,
         });
+
         const semanticProductIds = new Set(result.productIds);
         const semanticMatches = allProducts.filter((p) =>
           semanticProductIds.has(p.id)

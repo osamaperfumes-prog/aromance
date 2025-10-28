@@ -1,15 +1,12 @@
-'use server';
 /**
  * @fileOverview A product search AI flow.
  *
- * - searchProducts - A function that handles the product search process.
- * - SearchInput - The input type for the searchProducts function.
- * - SearchOutput - The return type for the searchProducts function.
+ * This file defines the Genkit flow for performing a semantic search on products.
+ * It is not intended to be called directly from the client but is used by a server action.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import type { Product } from '@/lib/types';
 
 // Define the shape of a single product for the AI model
 const ProductSchema = z.object({
@@ -17,35 +14,26 @@ const ProductSchema = z.object({
   name: z.string(),
   brand: z.string(),
   description: z.string(),
-  category: z.array(z.string()),
+  // Ensure category is always an array of strings for the model
+  category: z.array(z.string()).default([]),
 });
 
 export const SearchInputSchema = z.object({
-  query: z.string().describe('The user\'s search query.'),
-  products: z.array(ProductSchema).describe('The list of all available products.'),
+  query: z.string().describe("The user's search query."),
+  products: z
+    .array(ProductSchema)
+    .describe('The list of all available products.'),
 });
 export type SearchInput = z.infer<typeof SearchInputSchema>;
 
 export const SearchOutputSchema = z.object({
-  productIds: z.array(z.string()).describe('An array of product IDs that semantically match the user\'s query.'),
+  productIds: z
+    .array(z.string())
+    .describe(
+      "An array of product IDs that semantically match the user's query."
+    ),
 });
 export type SearchOutput = z.infer<typeof SearchOutputSchema>;
-
-export async function searchProducts(input: SearchInput): Promise<SearchOutput> {
-  // Filter out products that are obviously not relevant to speed up the process
-  // In a real-world scenario, you'd use a vector database for this.
-  const lowerQuery = input.query.toLowerCase();
-  const candidateProducts = input.products.filter(p => 
-      p.name.toLowerCase().includes(lowerQuery) ||
-      p.description.toLowerCase().includes(lowerQuery) ||
-      p.brand.toLowerCase().includes(lowerQuery) ||
-      p.category.some(c => c.toLowerCase().includes(lowerQuery))
-  );
-
-  // If we have many candidates, we can pass them to the LLM.
-  // For this example, we'll pass the full list to show the capability.
-  return searchFlow(input);
-}
 
 const prompt = ai.definePrompt({
   name: 'productSearchPrompt',
@@ -69,13 +57,16 @@ Based on the query, return the product IDs of the items that are the best semant
 Return ONLY the matching product IDs in the specified output format. Do not include products that are only a weak match. If no products are a good match, return an empty array.`,
 });
 
-const searchFlow = ai.defineFlow(
+// This flow is now internal to the AI system and called by the server action.
+export const searchFlow = ai.defineFlow(
   {
     name: 'searchFlow',
     inputSchema: SearchInputSchema,
     outputSchema: SearchOutputSchema,
   },
   async (input) => {
+    // In a real-world scenario, you might use a vector database for pre-filtering.
+    // For this example, we're relying on the LLM's ability to sift through the provided list.
     const { output } = await prompt(input);
     return output!;
   }
