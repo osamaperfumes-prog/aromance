@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
-import { ref, push, serverTimestamp } from 'firebase/database';
+import { ref, push, serverTimestamp, get } from 'firebase/database';
 import { Star } from 'lucide-react';
 
 export default function ContactPage() {
@@ -64,8 +64,8 @@ export default function ContactPage() {
   
   const handleTestimonialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!author || !quote || rating === 0) {
-      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide your name, rating, and review.' });
+    if (!author || !quote || rating === 0 || !orderId) {
+      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide your name, order number, rating, and review.' });
       return;
     }
     if (!database) {
@@ -75,28 +75,48 @@ export default function ContactPage() {
 
     setIsSubmittingTestimonial(true);
 
-    const testimonialData = {
-      author,
-      orderId,
-      quote,
-      rating,
-      createdAt: serverTimestamp(),
-    };
-
     try {
-      const testimonialsRef = ref(database, 'testimonials');
-      await push(testimonialsRef, testimonialData);
-      
-      toast({ title: 'Review Submitted!', description: 'Thank you for your feedback.'});
-      
-      setAuthor('');
-      setOrderId('');
-      setQuote('');
-      setRating(0);
+        const orderRef = ref(database, `orders/${orderId}`);
+        const orderSnapshot = await get(orderRef);
 
-    } catch (error) {
+        if (!orderSnapshot.exists()) {
+            throw new Error('Order not found. Please check your order number.');
+        }
+
+        const orderData = orderSnapshot.val();
+
+        // Condition 1: Check if order status is 'delivered'
+        if (orderData.status !== 'delivered') {
+            throw new Error('You can only review orders that have been delivered.');
+        }
+
+        // Condition 2: Check if author name matches buyer name (case-insensitive)
+        if (orderData.buyerName.toLowerCase() !== author.toLowerCase()) {
+            throw new Error('The name does not match the buyer name on the order.');
+        }
+
+        // All checks passed, proceed to save the testimonial
+        const testimonialData = {
+          author,
+          orderId,
+          quote,
+          rating,
+          createdAt: serverTimestamp(),
+        };
+
+        const testimonialsRef = ref(database, 'testimonials');
+        await push(testimonialsRef, testimonialData);
+        
+        toast({ title: 'Review Submitted!', description: 'Thank you for your feedback.'});
+        
+        setAuthor('');
+        setOrderId('');
+        setQuote('');
+        setRating(0);
+
+    } catch (error: any) {
       console.error("Error submitting testimonial:", error);
-      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your review. Please try again.'});
+      toast({ variant: 'destructive', title: 'Submission Failed', description: error.message || 'Could not submit your review. Please try again.'});
     } finally {
       setIsSubmittingTestimonial(false);
     }
@@ -166,19 +186,20 @@ export default function ContactPage() {
               <Label htmlFor="author">Your Name</Label>
               <Input
                 id="author"
-                placeholder="Enter your name"
+                placeholder="Enter your name as it appears on the order"
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 required
               />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="orderId">Order Number (Optional)</Label>
+              <Label htmlFor="orderId">Order Number</Label>
               <Input
                 id="orderId"
                 placeholder="e.g., 1001"
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
+                required
               />
             </div>
              <div className="space-y-2">
