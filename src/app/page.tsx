@@ -12,19 +12,23 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { getDatabase, ref, onValue, query, orderByChild, limitToLast } from 'firebase/database';
+import { getDatabase, ref, onValue, query, orderByChild, limitToLast, push, serverTimestamp } from 'firebase/database';
 import type { Product, Testimonial } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 type ProductWithId = Product & { id: string };
 
 export default function Home() {
   const testimonialImages = PlaceHolderImages.filter(img => img.id.startsWith('testimonial'));
   const { database } = useFirebase();
+  const { toast } = useToast();
   const [newArrivals, setNewArrivals] = useState<ProductWithId[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [isLoadingTestimonials, setIsLoadingTestimonials] = useState(true);
+  const [email, setEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   const recentProductsQuery = useMemoFirebase(() => {
     if (!database) return null;
@@ -90,6 +94,41 @@ export default function Home() {
 
     return () => unsubscribe();
   }, [testimonialsQuery]);
+
+  const handleEmailSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !database) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address.',
+      });
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      const subscribersRef = ref(database, 'subscribers');
+      await push(subscribersRef, {
+        email: email,
+        subscribedAt: serverTimestamp(),
+      });
+      toast({
+        title: 'Subscription Successful!',
+        description: 'You have been added to our mailing list.',
+      });
+      setEmail('');
+    } catch (error) {
+      console.error('Error subscribing email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Subscription Failed',
+        description: 'Could not subscribe your email. Please try again.',
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
 
   return (
@@ -240,9 +279,18 @@ export default function Home() {
         <div className="container mx-auto text-center max-w-2xl">
           <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-4">Get Exclusive Deals</h2>
           <p className="text-muted-foreground mb-6">Sign up to get access to our coupons and special promotions.</p>
-          <form className="flex max-w-md mx-auto">
-            <Input type="email" placeholder="Enter your email" className="rounded-r-none focus:ring-accent" />
-            <Button type="submit" className="rounded-l-none bg-accent hover:bg-accent/90">Sign Up</Button>
+          <form onSubmit={handleEmailSignup} className="flex max-w-md mx-auto">
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              className="rounded-r-none focus:ring-accent"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Button type="submit" className="rounded-l-none bg-accent hover:bg-accent/90" disabled={isSubscribing}>
+              {isSubscribing ? 'Signing Up...' : 'Sign Up'}
+            </Button>
           </form>
         </div>
       </section>
