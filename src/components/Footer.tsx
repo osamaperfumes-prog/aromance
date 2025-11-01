@@ -52,18 +52,6 @@ export const Footer = () => {
               <p className="mt-4 text-sm text-primary-foreground/70">
                 The world of fragrance, delivered to your door.
               </p>
-              <div className="flex space-x-4 mt-6">
-                {socialLinksConfig.map((social) => {
-                   const Icon = iconMap[social.name];
-                   const href = socialLinks[social.name.toLowerCase()] || '#';
-                   return (
-                     <a key={social.name} href={href} target="_blank" rel="noopener noreferrer" className="text-primary-foreground/70 hover:text-primary-foreground">
-                       <span className="sr-only">{social.name}</span>
-                       {Icon && <Icon className="h-6 w-6" aria-hidden="true" />}
-                     </a>
-                   );
-                })}
-              </div>
             </div>
             {footerLinks.map((section) => (
               <div key={section.title}>
@@ -86,8 +74,26 @@ export const Footer = () => {
               </div>
             ))}
           </div>
-          <div className="mt-12 border-t border-primary-foreground/20 pt-8 text-center text-sm text-primary-foreground/70">
-            <p>&copy; {new Date().getFullYear()} DNA. All rights reserved.</p>
+           <div className="mt-12 border-t border-primary-foreground/20 pt-8">
+            <div className="flex justify-center space-x-6">
+              {socialLinksConfig.map((social) => {
+                 const Icon = iconMap[social.name];
+                 const href = socialLinks[social.name.toLowerCase()] || '#';
+                 if (!href || href === '#') return null;
+                 
+                 const isWhatsapp = social.name === 'WhatsApp';
+
+                 return (
+                   <a key={social.name} href={href} target="_blank" rel="noopener noreferrer" className="text-primary-foreground/70 hover:text-primary-foreground">
+                     <span className="sr-only">{social.name}</span>
+                     {Icon && <Icon className={`h-8 w-8 transition-opacity hover:opacity-80 ${!isWhatsapp ? 'text-primary-foreground/70' : ''}`} aria-hidden="true" />}
+                   </a>
+                 );
+              })}
+            </div>
+            <div className="mt-8 text-center text-sm text-primary-foreground/70">
+              <p>&copy; {new Date().getFullYear()} DNA. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>
