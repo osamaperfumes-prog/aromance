@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
                           <Skeleton className="h-4 w-full" />
                           <Skeleton className="h-4 w-5/6" />
                       </div>
-                      <Skeleton className="h-12 w-40 mt-6" />
+                      <Skeleton className="h-12 w-full sm:w-40 mt-6" />
                   </div>
               </div>
           </div>
@@ -99,7 +99,7 @@ export default function ProductDetailPage() {
   const finalPrice = product.price * (1 - (product.discount || 0) / 100);
 
   return (
-    <div className="container mx-auto py-8 md:py-16">
+    <div className="container mx-auto px-4 py-8 md:py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
         <div className="aspect-square relative rounded-lg overflow-hidden bg-card">
           {product.imageUrl && (

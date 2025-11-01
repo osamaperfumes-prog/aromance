@@ -136,7 +136,7 @@ export default function Home() {
       {/* Trust Badges */}
       <section className="w-full bg-primary-foreground py-3">
         <div className="container mx-auto">
-          <div className="flex justify-center items-center gap-4 text-center">
+          <div className="flex flex-wrap justify-center items-center gap-4 text-center">
             {trustBadges.map((badge, index) => (
               <div key={index} className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
                 <badge.icon className="w-5 h-5 text-accent" />
@@ -150,8 +150,8 @@ export default function Home() {
       {/* Hero / Shop By Type */}
       <section className="w-full py-12 md:py-20 bg-card">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-2">Shop By Type</h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-primary">Shop By Type</h2>
+          <p className="text-lg text-muted-foreground mt-4 mb-8 max-w-2xl mx-auto">
             Find the perfect fragrance for any occasion. Whether you need a small bottle for your next trip or a luxurious gift set, we have you covered.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -187,7 +187,7 @@ export default function Home() {
       <section className="w-full py-12 md:py-20">
         <div className="container mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">New Arrivals</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-primary">New Arrivals</h2>
             <Button variant="link" asChild>
               <Link href="/products">See All &rarr;</Link>
             </Button>
@@ -217,7 +217,7 @@ export default function Home() {
       {/* Testimonials */}
       <section className="w-full py-12 md:py-20 bg-card">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl text-center mb-8">What Our Customers Say</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-primary text-center mb-8">What Our Customers Say</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {isLoadingTestimonials ? (
                Array.from({ length: 4 }).map((_, index) => (
@@ -276,8 +276,8 @@ export default function Home() {
 
       {/* Email Signup */}
       <section className="w-full py-12 md:py-20 bg-card">
-        <div className="container mx-auto text-center max-w-2xl">
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl mb-4">Get Exclusive Deals</h2>
+        <div className="container mx-auto text-center max-w-2xl px-4">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-primary mb-4">Get Exclusive Deals</h2>
           <p className="text-muted-foreground mb-6">Sign up to get access to our coupons and special promotions.</p>
           <form onSubmit={handleEmailSignup} className="flex max-w-md mx-auto">
             <Input

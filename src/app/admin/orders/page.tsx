@@ -138,13 +138,13 @@ export default function AdminOrdersPage() {
 
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Manage Orders</h1>
 
       {isLoading ? (
         <p>Loading orders...</p>
       ) : (
-        <div className="border rounded-lg">
+        <div className="border rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

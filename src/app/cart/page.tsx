@@ -119,9 +119,9 @@ export default function CartPage() {
 
 
   return (
-    <div className="container mx-auto py-8 md:py-12">
+    <div className="container mx-auto py-8 md:py-12 px-4">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl">Your Cart</h1>
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-primary">Your Cart</h1>
       </div>
 
       {cartItems.length === 0 ? (
@@ -214,7 +214,7 @@ export default function CartPage() {
                 
                 <Separator />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2 col-span-2 sm:col-span-1">
                     <Label htmlFor="buyer-name">Buyer Name</Label>
                     <Input id="buyer-name" placeholder="Enter your name" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} required />
@@ -241,7 +241,7 @@ export default function CartPage() {
                 {deliveryMethod === 'delivery' && (
                    <div className="space-y-4 pt-4 border-t">
                      <h3 className="font-semibold text-lg">Location</h3>
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2 col-span-2 sm:col-span-1">
                           <Label htmlFor="city">City</Label>
                           <Input id="city" placeholder="e.g. Amman" value={city} onChange={(e) => setCity(e.target.value)} required />
