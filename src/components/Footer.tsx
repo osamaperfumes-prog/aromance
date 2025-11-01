@@ -79,8 +79,6 @@ export const Footer = () => {
               {socialLinksConfig.map((social) => {
                  const Icon = iconMap[social.name];
                  const href = socialLinks[social.name.toLowerCase()] || '#';
-                 if (!href || href === '#') return null;
-                 
                  const isWhatsapp = social.name === 'WhatsApp';
 
                  return (
