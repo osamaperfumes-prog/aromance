@@ -72,7 +72,6 @@ export const footerLinks: FooterLink[] = [
 
 
 export const socialLinksConfig = [
-  { name: 'Facebook', icon: Facebook, placeholder: 'https://facebook.com/your-page' },
   { name: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/your-profile' },
   { name: 'WhatsApp', icon: WhatsappIcon, placeholder: 'https://wa.me/1234567890' },
 ];
