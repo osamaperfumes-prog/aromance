@@ -65,7 +65,7 @@ export const footerLinks: FooterLink[] = [
     title: 'Shop',
     links: [
       { name: 'New Arrivals', href: '#' },
-      { name: 'Brands', href: '#' },
+      { name: 'Brands', href: '/brands' },
     ],
   },
 ];
