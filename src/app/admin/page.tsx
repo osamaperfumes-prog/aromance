@@ -48,13 +48,13 @@ export default function AdminPage() {
           Logout
         </Button>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle>Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Welcome to the admin dashboard. Manage your site settings here.</p>
+            <p>Welcome to the admin dashboard. Manage your site here.</p>
           </CardContent>
         </Card>
         <Card>
@@ -76,6 +76,28 @@ export default function AdminPage() {
             <p>Add, edit, and remove products.</p>
             <Button asChild className="mt-4">
                 <Link href="/admin/products">Manage Products</Link>
+            </Button>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader>
+            <CardTitle>Feedback</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Manage reviews and inquiries.</p>
+            <Button asChild className="mt-4">
+                <Link href="/admin/feedback">Manage Feedback</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Site Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Update social media links.</p>
+            <Button asChild className="mt-4">
+                <Link href="/admin/settings">Edit Settings</Link>
             </Button>
           </CardContent>
         </Card>

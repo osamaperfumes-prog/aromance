@@ -45,21 +45,36 @@ export default function ContactPage() {
       });
       return;
     }
+     if (!database) {
+      toast({ variant: 'destructive', title: 'Database Error', description: 'Could not connect to the database.' });
+      return;
+    }
 
     setIsSubmittingInquiry(true);
-    // Here you would typically send the data to a backend or an email service.
-    // For this example, we'll just simulate a delay and show a success message.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const inquiryData = {
+        name,
+        phone,
+        message,
+        submittedAt: serverTimestamp(),
+      };
+      const inquiriesRef = ref(database, 'inquiries');
+      await push(inquiriesRef, inquiryData);
 
-    setIsSubmittingInquiry(false);
-    toast({
-      title: 'Message Sent!',
-      description: 'Thank you for contacting us. We will get back to you shortly.',
-    });
+      toast({
+        title: 'Message Sent!',
+        description: 'Thank you for contacting us. We will get back to you shortly.',
+      });
 
-    setName('');
-    setPhone('');
-    setMessage('');
+      setName('');
+      setPhone('');
+      setMessage('');
+    } catch (error: any) {
+        console.error("Error submitting inquiry:", error);
+        toast({ variant: 'destructive', title: 'Submission Failed', description: error.message || 'Could not submit your inquiry.'});
+    } finally {
+      setIsSubmittingInquiry(false);
+    }
   };
   
   const handleTestimonialSubmit = async (e: React.FormEvent) => {

@@ -1,12 +1,41 @@
 'use client';
 import Link from 'next/link';
 import { DnaLogo } from '@/components/DnaLogo';
-import { footerLinks, socialLinks } from '@/lib/data';
-import { useState } from 'react';
+import { footerLinks, socialLinksConfig } from '@/lib/data';
+import { useState, useEffect } from 'react';
 import { AdminLoginDialog } from './AdminLoginDialog';
+import { useFirebase, useMemoFirebase } from '@/firebase';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import { Facebook, Instagram } from 'lucide-react';
+import { WhatsappIcon } from './WhatsappIcon';
+
+
+// Map string names to icon components
+const iconMap: { [key: string]: React.FC<any> } = {
+  Facebook: Facebook,
+  Instagram: Instagram,
+  WhatsApp: WhatsappIcon
+};
+
 
 export const Footer = () => {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [socialLinks, setSocialLinks] = useState<{[key: string]: string}>({});
+  const { database } = useFirebase();
+
+  const settingsRef = useMemoFirebase(() => database ? ref(database, 'settings/socialLinks') : null, [database]);
+
+  useEffect(() => {
+    if (!settingsRef) return;
+    const unsubscribe = onValue(settingsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            setSocialLinks(data);
+        }
+    });
+    return () => unsubscribe();
+  }, [settingsRef]);
+
 
   const handleAdminClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -24,12 +53,16 @@ export const Footer = () => {
                 The world of fragrance, delivered to your door.
               </p>
               <div className="flex space-x-4 mt-6">
-                {socialLinks.map((social) => (
-                  <a key={social.name} href={social.href} className="text-primary-foreground/70 hover:text-primary-foreground">
-                    <span className="sr-only">{social.name}</span>
-                    <social.icon className="h-6 w-6" aria-hidden="true" />
-                  </a>
-                ))}
+                {socialLinksConfig.map((social) => {
+                   const Icon = iconMap[social.name];
+                   const href = socialLinks[social.name.toLowerCase()] || '#';
+                   return (
+                     <a key={social.name} href={href} target="_blank" rel="noopener noreferrer" className="text-primary-foreground/70 hover:text-primary-foreground">
+                       <span className="sr-only">{social.name}</span>
+                       {Icon && <Icon className="h-6 w-6" aria-hidden="true" />}
+                     </a>
+                   );
+                })}
               </div>
             </div>
             {footerLinks.map((section) => (
