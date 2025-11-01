@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { DnaLogo } from '@/components/AromanceLogo';
+import { DnaLogo } from '@/components/DnaLogo';
 import { footerLinks, socialLinks } from '@/lib/data';
 import { useState } from 'react';
 import { AdminLoginDialog } from './AdminLoginDialog';
