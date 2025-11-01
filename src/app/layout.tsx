@@ -7,7 +7,7 @@ import { CartProvider } from '@/context/CartContext';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Aromance - Authentic Perfumes and Colognes',
+  title: 'DNA - Authentic Perfumes and Colognes',
   description: 'Shop for authentic fragrances, perfumes, and colognes at discount prices. Free shipping on orders over $49.',
 };
 

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AromanceLogo } from '@/components/AromanceLogo';
+import { DnaLogo } from '@/components/AromanceLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -39,7 +39,7 @@ export const Header = () => {
               </SheetTrigger>
               <SheetContent side="left">
                 <div className="py-6">
-                  <AromanceLogo />
+                  <DnaLogo />
                   <nav className="mt-8 flex flex-col gap-4">
                     {navLinks.map((link) => (
                       <Link
@@ -56,7 +56,7 @@ export const Header = () => {
             </Sheet>
           </div>
           <div className="hidden lg:block">
-            <AromanceLogo />
+            <DnaLogo />
           </div>
 
           <div className="flex-1 mx-4 lg:mx-8">

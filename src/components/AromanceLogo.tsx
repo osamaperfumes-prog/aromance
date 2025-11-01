@@ -18,12 +18,12 @@ const PerfumeBottleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const AromanceLogo = ({ className, inHeader = true }: { className?: string, inHeader?: boolean }) => {
+export const DnaLogo = ({ className, inHeader = true }: { className?: string, inHeader?: boolean }) => {
   const Comp = inHeader ? 'h1' : 'div';
   return (
     <Link href="/" className={cn("flex items-center gap-2 text-primary", className)}>
       <PerfumeBottleIcon className="h-8 w-8 text-primary" />
-      <Comp className="text-3xl font-bold tracking-tighter">Aromance</Comp>
+      <Comp className="text-3xl font-bold tracking-tighter">DNA</Comp>
     </Link>
   );
 };

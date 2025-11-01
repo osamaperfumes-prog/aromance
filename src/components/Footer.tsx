@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { AromanceLogo } from '@/components/AromanceLogo';
+import { DnaLogo } from '@/components/AromanceLogo';
 import { footerLinks, socialLinks } from '@/lib/data';
 import { useState } from 'react';
 import { AdminLoginDialog } from './AdminLoginDialog';
@@ -19,7 +19,7 @@ export const Footer = () => {
         <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2 lg:col-span-1">
-              <AromanceLogo className="text-primary-foreground" inHeader={false} />
+              <DnaLogo className="text-primary-foreground" inHeader={false} />
               <p className="mt-4 text-sm text-primary-foreground/70">
                 The world of fragrance, delivered to your door.
               </p>
@@ -54,7 +54,7 @@ export const Footer = () => {
             ))}
           </div>
           <div className="mt-12 border-t border-primary-foreground/20 pt-8 text-center text-sm text-primary-foreground/70">
-            <p>&copy; {new Date().getFullYear()} Aromance. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} DNA. All rights reserved.</p>
           </div>
         </div>
       </footer>

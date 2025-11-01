@@ -19,7 +19,7 @@ export const categories: Category[] = [
 ];
 
 export const rewards: InfoSection = {
-  title: 'Aromance Rewards',
+  title: 'DNA Rewards',
   description: 'Earn 1 point for every dollar you spend. Redeem your points for exclusive discounts on future purchases.',
   cta: 'Join Rewards',
   icon: Award,
@@ -39,7 +39,7 @@ const aromanceFactorPoints: AromanceFactorPoint[] = [
 ];
 
 export const aromanceFactor: InfoSection & { points: AromanceFactorPoint[] } = {
-  title: 'The Aromance Factor',
+  title: 'The DNA Factor',
   description: 'Why shop with us?',
   cta: '',
   icon: Bot,
@@ -55,7 +55,7 @@ export const footerLinks: FooterLink[] = [
     ],
   },
   {
-    title: 'About Aromance',
+    title: 'About DNA',
     links: [
       { name: 'About Us', href: '#' },
       { name: 'Admin', href: '/admin' },
