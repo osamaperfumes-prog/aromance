@@ -57,7 +57,7 @@ export const footerLinks: FooterLink[] = [
   {
     title: 'About DNA',
     links: [
-      { name: 'About Us', href: '#' },
+      { name: 'About Us', href: '/about' },
       { name: 'Admin', href: '/admin' },
     ],
   },

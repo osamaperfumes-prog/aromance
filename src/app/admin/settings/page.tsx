@@ -8,7 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { socialLinksConfig } from '@/lib/data';
+import { Separator } from '@/components/ui/separator';
 
 type SocialLinks = Record<string, string>;
 
@@ -17,17 +19,19 @@ export default function AdminSettingsPage() {
     const { toast } = useToast();
     
     const [links, setLinks] = useState<SocialLinks>({});
+    const [aboutUsContent, setAboutUsContent] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    const settingsRef = useMemoFirebase(() => database ? ref(database, 'settings/socialLinks') : null, [database]);
+    const settingsRef = useMemoFirebase(() => database ? ref(database, 'settings') : null, [database]);
 
     useEffect(() => {
         if (!settingsRef) return;
         const unsubscribe = onValue(settingsRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                setLinks(data);
+                setLinks(data.socialLinks || {});
+                setAboutUsContent(data.aboutUs || '');
             }
             setIsLoading(false);
         }, (error) => {
@@ -49,8 +53,12 @@ export default function AdminSettingsPage() {
         }
         setIsSaving(true);
         try {
-            await set(settingsRef, links);
-            toast({ title: 'Settings Saved', description: 'Your social media links have been updated.' });
+            // Save all settings under the main 'settings' ref
+            await set(settingsRef, {
+                socialLinks: links,
+                aboutUs: aboutUsContent
+            });
+            toast({ title: 'Settings Saved', description: 'Your settings have been updated successfully.' });
         } catch (error: any) {
             console.error('Error saving settings:', error);
             toast({ variant: 'destructive', title: 'Save Failed', description: error.message || 'Could not save settings.' });
@@ -61,34 +69,59 @@ export default function AdminSettingsPage() {
     
     return (
         <div className="container mx-auto py-8">
-            <h1 className="text-3xl font-bold mb-6">Site Settings</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Site Settings</h1>
+                <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save All Changes'}
+                </Button>
+            </div>
             
-            <Card className="max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Social Media Links</CardTitle>
-                    <CardDescription>Update the links for the social media icons in the footer.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isLoading ? <p>Loading settings...</p> : (
-                        <div className="space-y-6">
-                            {socialLinksConfig.map(social => (
-                                <div key={social.name} className="space-y-2">
-                                    <Label htmlFor={`link-${social.name.toLowerCase()}`}>{social.name}</Label>
-                                    <Input 
-                                        id={`link-${social.name.toLowerCase()}`}
-                                        value={links[social.name.toLowerCase()] || ''}
-                                        onChange={(e) => handleInputChange(social.name.toLowerCase(), e.target.value)}
-                                        placeholder={social.placeholder}
-                                    />
-                                </div>
-                            ))}
-                             <Button onClick={handleSave} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
+                <Card className="lg:col-span-1">
+                    <CardHeader>
+                        <CardTitle>Social Media Links</CardTitle>
+                        <CardDescription>Update the links for the social media icons in the footer.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? <p>Loading...</p> : (
+                            <div className="space-y-6">
+                                {socialLinksConfig.map(social => (
+                                    <div key={social.name} className="space-y-2">
+                                        <Label htmlFor={`link-${social.name.toLowerCase()}`}>{social.name}</Label>
+                                        <Input 
+                                            id={`link-${social.name.toLowerCase()}`}
+                                            value={links[social.name.toLowerCase()] || ''}
+                                            onChange={(e) => handleInputChange(social.name.toLowerCase(), e.target.value)}
+                                            placeholder={social.placeholder}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                 <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>About Us Page</CardTitle>
+                        <CardDescription>Edit the content that appears on your "About Us" page.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? <p>Loading...</p> : (
+                            <div className="space-y-2">
+                                <Label htmlFor="about-us-content">Page Content</Label>
+                                <Textarea
+                                    id="about-us-content"
+                                    value={aboutUsContent}
+                                    onChange={(e) => setAboutUsContent(e.target.value)}
+                                    placeholder="Write a little bit about your store..."
+                                    rows={15}
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
