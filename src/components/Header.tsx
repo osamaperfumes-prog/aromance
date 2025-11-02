@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { navLinks } from '@/lib/data';
-import { Search, Heart, ShoppingCart, Menu } from 'lucide-react';
+import { Search, ShoppingCart, Menu } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
 
@@ -73,9 +73,6 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" aria-label="Wishlist">
-              <Heart className="h-6 w-6" />
-            </Button>
             <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative" asChild>
               <Link href="/cart">
                 <ShoppingCart className="h-6 w-6" />
