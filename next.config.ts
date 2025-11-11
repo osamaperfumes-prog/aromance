@@ -41,20 +41,22 @@ const nextConfig: NextConfig = {
   devIndicators: {
     buildActivity: false,
   },
-  // When running inside Cloud Workstations, the preview is served from a different
-  // origin. This is a security measure to prevent issues like XSS.
-  // We need to explicitly allow this origin to connect to the dev server.
-  // For more details, see: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
-  ...(process.env.GITPOD_WORKSPACE_URL && {
-    experimental: {
-      allowedDevOrigins: [
-        new URL(process.env.GITPOD_WORKSPACE_URL).hostname.replace(
-          /^\d+/,
-          '6000'
-        ),
-      ],
-    },
-  }),
+  experimental: {
+    // This is required to allow 'firebase-admin' to be used in server components.
+    serverComponentsExternalPackages: ['firebase-admin'],
+    // When running inside Cloud Workstations, the preview is served from a different
+    // origin. This is a security measure to prevent issues like XSS.
+    // We need to explicitly allow this origin to connect to the dev server.
+    // For more details, see: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+    ...(process.env.GITPOD_WORKSPACE_URL && {
+        allowedDevOrigins: [
+          new URL(process.env.GITPOD_WORKSPACE_URL).hostname.replace(
+            /^\d+/,
+            '6000'
+          ),
+        ],
+    }),
+  },
 };
 
 export default nextConfig;

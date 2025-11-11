@@ -1,16 +1,37 @@
-import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from '@/context/CartContext';
 import { FirebaseClientProvider } from '@/firebase';
-import { siteMetadata } from '@/lib/site-metadata';
+import { getAdminApp } from '@/firebase/admin-config';
+import { siteMetadata as defaultMetadata } from '@/lib/site-metadata';
+import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: siteMetadata.title,
-  description: siteMetadata.description,
-};
+
+// This function fetches metadata from Firebase on the server.
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const adminDb = (await getAdminApp()).database();
+    const metadataRef = adminDb.ref('settings/siteMetadata');
+    const snapshot = await metadataRef.once('value');
+    const metadata = snapshot.val();
+
+    if (metadata && metadata.title && metadata.description) {
+      return {
+        title: metadata.title,
+        description: metadata.description,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to fetch dynamic metadata, falling back to default:", error);
+    // Fallback to default metadata if Firebase fetch fails
+    return defaultMetadata;
+  }
+  // Fallback if data is not present in DB
+  return defaultMetadata;
+}
+
 
 export default function RootLayout({
   children,

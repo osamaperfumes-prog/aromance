@@ -84,7 +84,7 @@ export const Footer = () => {
                  return (
                    <a key={social.name} href={href} target="_blank" rel="noopener noreferrer" className="text-primary-foreground/70 hover:text-primary-foreground">
                      <span className="sr-only">{social.name}</span>
-                     {Icon && <Icon className={`h-10 w-10 transition-opacity hover:opacity-80 ${!isWhatsapp ? 'text-primary-foreground/70' : ''}`} aria-hidden="true" />}
+                     {Icon && <Icon className={`h-10 w-10 transition-opacity hover:opacity-80`} aria-hidden="true" />}
                    </a>
                  );
               })}

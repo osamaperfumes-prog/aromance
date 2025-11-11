@@ -14,12 +14,18 @@ import { Separator } from '@/components/ui/separator';
 
 type SocialLinks = Record<string, string>;
 
+interface SiteMetadata {
+    title: string;
+    description: string;
+}
+
 export default function AdminSettingsPage() {
     const { database } = useFirebase();
     const { toast } = useToast();
     
     const [links, setLinks] = useState<SocialLinks>({});
     const [aboutUsContent, setAboutUsContent] = useState('');
+    const [siteMetadata, setSiteMetadata] = useState<SiteMetadata>({ title: '', description: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -32,6 +38,7 @@ export default function AdminSettingsPage() {
             if (data) {
                 setLinks(data.socialLinks || {});
                 setAboutUsContent(data.aboutUs || '');
+                setSiteMetadata(data.siteMetadata || { title: '', description: '' });
             }
             setIsLoading(false);
         }, (error) => {
@@ -45,6 +52,10 @@ export default function AdminSettingsPage() {
     const handleInputChange = (name: string, value: string) => {
         setLinks(prev => ({ ...prev, [name]: value }));
     };
+
+    const handleMetadataChange = (field: keyof SiteMetadata, value: string) => {
+        setSiteMetadata(prev => ({ ...prev, [field]: value }));
+    };
     
     const handleSave = async () => {
         if (!settingsRef) {
@@ -53,10 +64,10 @@ export default function AdminSettingsPage() {
         }
         setIsSaving(true);
         try {
-            // Save all settings under the main 'settings' ref
             await set(settingsRef, {
                 socialLinks: links,
-                aboutUs: aboutUsContent
+                aboutUs: aboutUsContent,
+                siteMetadata: siteMetadata
             });
             toast({ title: 'Settings Saved', description: 'Your settings have been updated successfully.' });
         } catch (error: any) {
@@ -77,6 +88,38 @@ export default function AdminSettingsPage() {
             </div>
             
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
+                <Card className="lg:col-span-3">
+                    <CardHeader>
+                        <CardTitle>Site Metadata</CardTitle>
+                        <CardDescription>Update the site title and description for SEO.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         {isLoading ? <p>Loading...</p> : (
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="site-title">Site Title</Label>
+                                    <Input 
+                                        id="site-title"
+                                        value={siteMetadata.title}
+                                        onChange={(e) => handleMetadataChange('title', e.target.value)}
+                                        placeholder="Your Site Title"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="site-description">Site Description</Label>
+                                    <Textarea
+                                        id="site-description"
+                                        value={siteMetadata.description}
+                                        onChange={(e) => handleMetadataChange('description', e.target.value)}
+                                        placeholder="A short description of your site."
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Social Media Links</CardTitle>
