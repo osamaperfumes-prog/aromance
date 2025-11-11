@@ -1,3 +1,4 @@
+
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -11,24 +12,28 @@ import type { Metadata } from 'next';
 
 // This function fetches metadata from Firebase on the server.
 export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const adminDb = (await getAdminApp()).database();
-    const metadataRef = adminDb.ref('settings/siteMetadata');
-    const snapshot = await metadataRef.once('value');
-    const metadata = snapshot.val();
+  // Only attempt to fetch from Firebase if the necessary env var is present.
+  if (process.env.FIREBASE_PROJECT_ID) {
+    try {
+      const adminDb = (await getAdminApp()).database();
+      const metadataRef = adminDb.ref('settings/siteMetadata');
+      const snapshot = await metadataRef.once('value');
+      const metadata = snapshot.val();
 
-    if (metadata && metadata.title && metadata.description) {
-      return {
-        title: metadata.title,
-        description: metadata.description,
-      };
+      if (metadata && metadata.title && metadata.description) {
+        return {
+          title: metadata.title,
+          description: metadata.description,
+        };
+      }
+    } catch (error) {
+      console.error("Failed to fetch dynamic metadata, falling back to default:", error);
+      // Fallback to default metadata if Firebase fetch fails
+      return defaultMetadata;
     }
-  } catch (error) {
-    console.error("Failed to fetch dynamic metadata, falling back to default:", error);
-    // Fallback to default metadata if Firebase fetch fails
-    return defaultMetadata;
   }
-  // Fallback if data is not present in DB
+  
+  // Fallback if env var is not set or data is not present in DB
   return defaultMetadata;
 }
 
