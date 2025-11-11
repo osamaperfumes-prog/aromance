@@ -5,10 +5,11 @@ import { Footer } from '@/components/Footer';
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from '@/context/CartContext';
 import { FirebaseClientProvider } from '@/firebase';
+import { siteMetadata } from '@/lib/site-metadata';
 
 export const metadata: Metadata = {
-  title: 'DNA - Authentic Perfumes and Colognes',
-  description: 'Shop for authentic fragrances, perfumes, and colognes at discount prices. Free shipping on orders over $49.',
+  title: siteMetadata.title,
+  description: siteMetadata.description,
 };
 
 export default function RootLayout({
